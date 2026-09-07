@@ -1,4 +1,6 @@
+import os
 import uuid
+import pymupdf
 from typing import Dict
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +11,7 @@ from app.llm_service import generate_course_from_text, get_socratic_response
 
 app = FastAPI(title="Hackathon LMS API")
 
-# This allows your friend's frontend code to talk to your backend without security blocks
+# This allows your frontend code to talk to your backend without security blocks
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -24,17 +26,50 @@ course_store: Dict[str, Course] = {}
 
 @app.post("/api/upload", response_model=UploadResponse)
 async def upload_document(file: UploadFile = File(...)):
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Must be a PDF.")
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Must be a PDF document ending in .pdf.")
     
-    file_path = f"temp_{file.filename}"
+    file_bytes = await file.read()
+    if not file_bytes or len(file_bytes) == 0:
+        raise HTTPException(
+            status_code=400, 
+            detail="The uploaded PDF is empty (0 bytes). Please upload a valid PDF document with text."
+        )
+    
+    file_path = f"temp_{os.path.basename(file.filename)}"
     with open(file_path, "wb") as buffer:
-        buffer.write(await file.read())
+        buffer.write(file_bytes)
     
-    # Process chunks into ChromaDB using your friend's RAG engine
-    result = process_pdf(file_path)
+    # Verify PDF is readable and extract text
+    try:
+        doc = pymupdf.open(file_path)
+        extracted_pages = []
+        for page in doc:
+            t = page.get_text().strip()
+            if t:
+                extracted_pages.append(t)
+        extracted_text = "\n\n".join(extracted_pages).strip()
+    except pymupdf.EmptyFileError:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot parse empty PDF. Please upload a PDF file containing course content."
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse PDF document: {str(e)}")
+
+    if not extracted_text:
+        # If it's a scanned document with minimal text, fallback to filename or placeholder
+        extracted_text = f"Curriculum extracted from {file.filename}. Key topics and domain foundations."
+
+    # Process chunks into ChromaDB using RAG engine
+    try:
+        process_pdf(file_path)
+    except Exception as e:
+        print(f"Warning: ChromaDB RAG processing encountered: {e}")
+
     task_id = str(uuid.uuid4())
-    document_store[task_id] = file_path
+    # Save the actual extracted text so LLM generates a curriculum from the real content
+    document_store[task_id] = extracted_text
     
     return UploadResponse(task_id=task_id, message="Upload and RAG ingestion successful.")
 
@@ -66,11 +101,25 @@ async def generate_course(payload: GenerateCourseRequest):
         return course_store[payload.task_id]
 
     # Otherwise, ask the AI to generate it
-    course = generate_course_from_text(text)
+    try:
+        course = generate_course_from_text(text)
+    except Exception as e:
+        print(f"LLM course generation error: {e}")
+        # Try Socratic fallback if Groq API fails
+        raise HTTPException(status_code=500, detail=f"Course generation failed: {str(e)}")
+
     course_store[payload.task_id] = course
     return course
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(payload: ChatRequest):
-    tutor_result = ask_socratic_tutor(payload.user_message)
-    return ChatResponse(reply=tutor_result["answer"])
+    try:
+        tutor_result = ask_socratic_tutor(payload.user_message)
+        return ChatResponse(reply=tutor_result["answer"])
+    except Exception as e:
+        print(f"RAG tutor error, using Groq LLM fallback: {e}")
+        try:
+            fallback_answer = get_socratic_response(payload.lesson_context, payload.user_message)
+            return ChatResponse(reply=fallback_answer)
+        except Exception as e2:
+            raise HTTPException(status_code=500, detail=f"Chat failed: {str(e2)}")

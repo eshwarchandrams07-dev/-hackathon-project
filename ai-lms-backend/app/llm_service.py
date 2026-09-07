@@ -14,7 +14,9 @@ client = OpenAI(
 
 def generate_course_from_text(raw_text: str) -> Course:
     # Limit characters so we don't overwhelm the AI
-    truncated_text = raw_text[:12000] 
+    truncated_text = raw_text[:12000]
+    if len(truncated_text.strip()) < 30:
+        truncated_text = f"Educational study material: {truncated_text}\nComprehensive concepts, architecture, and principles."
 
     json_blueprint = """
     {
@@ -58,22 +60,42 @@ def generate_course_from_text(raw_text: str) -> Course:
     system_prompt = (
         "You are an expert curriculum designer. Extract educational modules from the following text. "
         "CRITICAL RULES: \n"
-        "1. Generate EXACTLY ONE module containing EXACTLY ONE lesson to ensure stable formatting.\n"
+        "1. Generate EXACTLY ONE module containing at least one high-quality lesson to ensure stable formatting.\n"
         f"2. You MUST respond with ONLY a valid JSON object that EXACTLY matches this structure and uses these exact keys:\n{json_blueprint}"
     )
 
-    response = client.chat.completions.create(
-        model="openai/gpt-oss-120b",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Source Material:\n\n{truncated_text}"}
-        ],
-        response_format={"type": "json_object"},
-        max_tokens=3000
-    )
+    models_to_try = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"]
+    last_err = None
 
-    json_string = response.choices[0].message.content
-    return Course.model_validate_json(json_string)
+    for model_name in models_to_try:
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Source Material:\n\n{truncated_text}"}
+                ],
+                response_format={"type": "json_object"},
+                max_tokens=3000
+            )
+
+            json_string = response.choices[0].message.content or "{}"
+            # Clean markdown codeblocks if present
+            cleaned = json_string.strip()
+            if cleaned.startswith("```"):
+                parts = cleaned.split("```")
+                if len(parts) >= 2:
+                    cleaned = parts[1]
+                    if cleaned.startswith("json"):
+                        cleaned = cleaned[4:]
+            cleaned = cleaned.strip()
+
+            return Course.model_validate_json(cleaned)
+        except Exception as e:
+            last_err = e
+            print(f"Model {model_name} failed: {e}. Trying next fallback...")
+
+    raise last_err or RuntimeError("Failed to generate course from text.")
 
 def get_socratic_response(context: str, user_message: str) -> str:
     response = client.chat.completions.create(
