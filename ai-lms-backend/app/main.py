@@ -3,6 +3,7 @@ from typing import Dict
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import UploadResponse, GenerateCourseRequest, Course, Module, ChatRequest, ChatResponse
+from app.rag_engine import process_pdf, ask_socratic_tutor, generate_course_outline
 from app.pdf_parser import extract_text_from_pdf
 from app.llm_service import generate_course_from_text, get_socratic_response
 
@@ -26,14 +27,16 @@ async def upload_document(file: UploadFile = File(...)):
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Must be a PDF.")
     
-    file_bytes = await file.read()
-    text = extract_text_from_pdf(file_bytes)
+    file_path = f"temp_{file.filename}"
+    with open(file_path, "wb") as buffer:
+        buffer.write(await file.read())
+    
+    # Process chunks into ChromaDB using your friend's RAG engine
+    result = process_pdf(file_path)
     task_id = str(uuid.uuid4())
+    document_store[task_id] = file_path
     
-    # Save the extracted text into memory using the task_id
-    document_store[task_id] = text
-    
-    return UploadResponse(task_id=task_id, message="Upload successful.")
+    return UploadResponse(task_id=task_id, message="Upload and RAG ingestion successful.")
 
 @app.post("/api/generate-course/mock", response_model=Course)
 def generate_course_dummy():
@@ -69,5 +72,5 @@ async def generate_course(payload: GenerateCourseRequest):
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(payload: ChatRequest):
-    reply = get_socratic_response(payload.lesson_context, payload.user_message)
-    return ChatResponse(reply=reply)
+    tutor_result = ask_socratic_tutor(payload.user_message)
+    return ChatResponse(reply=tutor_result["answer"])
