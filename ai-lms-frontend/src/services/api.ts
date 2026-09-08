@@ -332,7 +332,32 @@ class ApiService {
    * Local Socratic fallback response in case the backend is offline
    */
   generateFallbackSocraticReply(userMessage: string, lessonTitle?: string): string {
-    const q = userMessage.toLowerCase();
+    const q = userMessage.toLowerCase().trim();
+
+    // 0. Pure Greeting / Intro / Small Talk
+    const words = q.replace(/[^a-z\s]/g, '').split(/\s+/).filter(Boolean);
+    const greetingWords = new Set(['hi', 'hello', 'hey', 'hola', 'yo', 'sup', 'morning', 'afternoon', 'evening']);
+    const isPureGreeting = words.length > 0 && words.every(w => greetingWords.has(w) || ['there', 'tutor', 'bot', 'assistant', 'mindforge'].includes(w));
+    const isIntro = q.includes('who are you') || q.includes('what can you do') || q.includes('help me') || q.includes('how does this work');
+
+    if (isPureGreeting || isIntro) {
+      return `### [Socratic Tutor] Hello! Welcome to MindForge\n\n` +
+        `Welcome to your study session on **${lessonTitle || 'this topic'}**!\n\n` +
+        `I am your Socratic AI Study Companion. Rather than simply giving static answers, I guide your intuition through interactive inquiry.\n\n` +
+        `**Here are some things you can ask me:**\n` +
+        `* **Code Breakdown**: *"Explain the code line by line"*\n` +
+        `* **Intuitive Analogy**: *"Give me a real-world analogy"*\n` +
+        `* **Math & Formulas**: *"Show me the calculation steps"*\n` +
+        `* **Trade-Offs**: *"What are the advantages and disadvantages?"*\n` +
+        `* **Quiz Guidance**: *"Give me a hint on the quiz"*\n\n` +
+        `---\n\n` +
+        `**What would you like to explore first?** Type any question or click one of the quick prompt buttons below!`;
+    }
+
+    // 0b. Affirmations
+    if (words.length > 0 && words.every(w => ['thanks', 'thank', 'you', 'thx', 'cool', 'ok', 'okay', 'great', 'awesome', 'got', 'it', 'understood'].includes(w))) {
+      return `You're very welcome! Keep up the great work. Would you like to test your understanding with a practice question or explore another facet of ${lessonTitle || 'this concept'}?`;
+    }
 
     // 1. Code & Line-by-Line Breakdown Request
     if (q.includes('code') || q.includes('line') || q.includes('program') || q.includes('printf') || q.includes('scanf')) {

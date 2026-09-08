@@ -363,7 +363,7 @@ def add_chat_message(
 
         cursor.execute(
             """
-            INSERT INTO chat_messages (id, session_id, user_id, lesson_id, role, content, citations, timestamp)
+            INSERT OR REPLACE INTO chat_messages (id, session_id, user_id, lesson_id, role, content, citations, timestamp)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (m_id, session_id, user_id, lesson_id, role, content, citations_json, ts)
