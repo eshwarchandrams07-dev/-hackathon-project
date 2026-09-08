@@ -19,6 +19,7 @@ export const App: React.FC = () => {
   // Workspace panels
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isTutorOpen, setIsTutorOpen] = useState<boolean>(false);
+  const [isQuizOpen, setIsQuizOpen] = useState<boolean>(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
   // Stable session identifier for current course or general chat history
@@ -259,6 +260,8 @@ export const App: React.FC = () => {
           onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
           isTutorOpen={isTutorOpen}
           onToggleTutor={() => setIsTutorOpen(prev => !prev)}
+          isQuizOpen={isQuizOpen}
+          onToggleQuiz={() => setIsQuizOpen(prev => !prev)}
           onOpenUpload={() => setIsUploadModalOpen(true)}
           onLoadDemoCourse={handleLoadDemoCourse}
           isBackendOnline={isBackendOnline}
@@ -275,6 +278,8 @@ export const App: React.FC = () => {
               isOverviewActive={isOverviewActive}
               onSelectLesson={handleSelectLesson}
               onAskTutor={handleAskTutorPrompt}
+              isQuizOpen={isQuizOpen}
+              onToggleQuiz={() => setIsQuizOpen(prev => !prev)}
             />
           ) : (
             <UploadLanding

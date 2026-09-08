@@ -189,7 +189,7 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
               </div>
 
               {/* Options Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-7 mb-3">
+              <div className="grid grid-cols-1 gap-2 pl-0 sm:pl-7 mb-3">
                 {q.options.map((option, optIdx) => {
                   const isOptSelected = selected === option;
                   const isTheCorrectOpt = option === q.correct_answer;
@@ -226,7 +226,7 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
               </div>
 
               {/* Action Buttons & Feedback */}
-              <div className="pl-7 flex flex-wrap items-center justify-between gap-2 pt-1">
+              <div className="pl-0 sm:pl-7 flex flex-wrap items-center justify-between gap-2 pt-1">
                 <div className="flex items-center gap-2">
                   {!isChecked ? (
                     <button

@@ -10,7 +10,8 @@ import {
   RefreshCw, 
   X,
   Sparkles,
-  BookOpen
+  BookOpen,
+  HelpCircle
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -22,6 +23,8 @@ interface NavbarProps {
   onToggleSidebar: () => void;
   isTutorOpen: boolean;
   onToggleTutor: () => void;
+  isQuizOpen?: boolean;
+  onToggleQuiz?: () => void;
   onOpenUpload: () => void;
   onLoadDemoCourse?: () => void;
   isBackendOnline: boolean;
@@ -37,6 +40,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleSidebar,
   isTutorOpen,
   onToggleTutor,
+  isQuizOpen,
+  onToggleQuiz,
   onOpenUpload,
   onLoadDemoCourse,
   isBackendOnline,
@@ -148,6 +153,24 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isBackendOnline ? 'API :8000' : 'Demo'}
             </span>
           </button>
+
+          {/* Toggle Lesson Quiz (when active lesson has questions) */}
+          {activeLesson?.quiz && activeLesson.quiz.length > 0 && onToggleQuiz && (
+            <button
+              onClick={onToggleQuiz}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm ${
+                isQuizOpen
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+              }`}
+              title={isQuizOpen ? 'Hide Quiz Panel' : 'Open Quiz Panel'}
+            >
+              <HelpCircle className="h-3.5 w-3.5 text-amber-400" />
+              <span className="hidden sm:inline">
+                {isQuizOpen ? 'Hide Quiz' : `Quiz (${activeLesson.quiz.length})`}
+              </span>
+            </button>
+          )}
 
           {/* Toggle Socratic Tutor Companion */}
           <button
