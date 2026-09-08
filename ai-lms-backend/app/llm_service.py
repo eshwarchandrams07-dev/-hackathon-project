@@ -8,10 +8,20 @@ from app.schemas import Course, QuizQuestion
 
 load_dotenv()
 
-client = OpenAI(
-    base_url="https://api.groq.com/openai/v1",
-    api_key=os.getenv("GROQ_API_KEY")
-)
+_client = None
+
+def get_groq_client():
+    global _client
+    if _client is not None:
+        return _client
+    groq_key = os.getenv("GROQ_API_KEY", "")
+    if not groq_key:
+        groq_key = "placeholder_key"
+    _client = OpenAI(
+        base_url="https://api.groq.com/openai/v1",
+        api_key=groq_key
+    )
+    return _client
 
 def generate_course_from_text(raw_text: str) -> Course:
     truncated_text = raw_text[:12000]
@@ -69,6 +79,7 @@ def generate_course_from_text(raw_text: str) -> Course:
     models_to_try = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"]
     last_err = None
 
+    client = get_groq_client()
     for model_name in models_to_try:
         try:
             response = client.chat.completions.create(
@@ -125,6 +136,7 @@ def generate_quiz_for_lesson(lesson_title: str, lesson_content: str, num_questio
     }}
     """
 
+    client = get_groq_client()
     models_to_try = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"]
     for model_name in models_to_try:
         try:
@@ -182,6 +194,7 @@ def generate_quiz_for_lesson(lesson_title: str, lesson_content: str, num_questio
     ]
 
 def get_socratic_response(context: str, user_message: str) -> str:
+    client = get_groq_client()
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",
         messages=[

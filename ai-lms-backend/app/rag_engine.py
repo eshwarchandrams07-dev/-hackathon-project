@@ -8,14 +8,19 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    raise ValueError("❌ GEMINI_API_KEY missing from .env environment!")
+_client = None
 
-print(f"DEBUG: Loaded API Key starts with: {API_KEY[:10]}...")
-
-# Import modern Google GenAI Client
-from google import genai
-client = genai.Client(api_key=API_KEY)
+def get_gemini_client():
+    global _client, API_KEY
+    if _client is not None:
+        return _client
+    if not API_KEY:
+        API_KEY = os.getenv("GEMINI_API_KEY")
+    if not API_KEY:
+        raise ValueError("❌ GEMINI_API_KEY missing from .env environment! Please add your GEMINI_API_KEY to ai-lms-backend/.env")
+    from google import genai
+    _client = genai.Client(api_key=API_KEY)
+    return _client
 
 # Vector DB setup
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
@@ -88,6 +93,7 @@ Course Context:
 
 Student Question: {user_query}
 """
+    client = get_gemini_client()
     response = client.models.generate_content(
         model="gemini-3.6-flash",
         contents=prompt
@@ -110,6 +116,7 @@ Format using clear bullet points with Module Titles, Key Learning Objectives, an
 Course Context:
 {context_str}
 """
+    client = get_gemini_client()
     response = client.models.generate_content(
         model="gemini-3.6-flash",
         contents=prompt
@@ -127,6 +134,7 @@ For each question, provide 4 options (A, B, C, D) and specify the correct answer
 Course Context:
 {context_str}
 """
+    client = get_gemini_client()
     response = client.models.generate_content(
         model="gemini-3.6-flash",
         contents=prompt
