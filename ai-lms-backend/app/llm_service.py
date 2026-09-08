@@ -1,19 +1,19 @@
 import os
 import json
+import uuid
+from typing import List
 from openai import OpenAI
 from dotenv import load_dotenv
-from app.schemas import Course
+from app.schemas import Course, QuizQuestion
 
 load_dotenv()
 
-# We use the OpenAI library but point it to Groq's servers using your Groq key
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
     api_key=os.getenv("GROQ_API_KEY")
 )
 
 def generate_course_from_text(raw_text: str) -> Course:
-    # Limit characters so we don't overwhelm the AI
     truncated_text = raw_text[:12000]
     if len(truncated_text.strip()) < 30:
         truncated_text = f"Educational study material: {truncated_text}\nComprehensive concepts, architecture, and principles."
@@ -40,7 +40,8 @@ def generate_course_from_text(raw_text: str) -> Course:
                   "question": "Question text?",
                   "options": ["A", "B", "C", "D"],
                   "correct_answer": "Exact text of correct option",
-                  "hint": "Helpful hint"
+                  "hint": "Helpful hint",
+                  "difficulty": "Easy"
                 }
               ]
             }
@@ -61,7 +62,8 @@ def generate_course_from_text(raw_text: str) -> Course:
         "You are an expert curriculum designer. Extract educational modules from the following text. "
         "CRITICAL RULES: \n"
         "1. Generate EXACTLY ONE module containing at least one high-quality lesson to ensure stable formatting.\n"
-        f"2. You MUST respond with ONLY a valid JSON object that EXACTLY matches this structure and uses these exact keys:\n{json_blueprint}"
+        "2. For each quiz question, assign an appropriate difficulty: 'Easy', 'Medium', or 'Hard'.\n"
+        f"3. You MUST respond with ONLY a valid JSON object that EXACTLY matches this structure and uses these exact keys:\n{json_blueprint}"
     )
 
     models_to_try = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"]
@@ -80,7 +82,6 @@ def generate_course_from_text(raw_text: str) -> Course:
             )
 
             json_string = response.choices[0].message.content or "{}"
-            # Clean markdown codeblocks if present
             cleaned = json_string.strip()
             if cleaned.startswith("```"):
                 parts = cleaned.split("```")
@@ -96,6 +97,89 @@ def generate_course_from_text(raw_text: str) -> Course:
             print(f"Model {model_name} failed: {e}. Trying next fallback...")
 
     raise last_err or RuntimeError("Failed to generate course from text.")
+
+def generate_quiz_for_lesson(lesson_title: str, lesson_content: str, num_questions: int = 2) -> List[QuizQuestion]:
+    prompt = f"""
+    Generate {num_questions} fresh, thoughtful multiple-choice questions for the lesson "{lesson_title}".
+    Lesson Content excerpt:
+    {lesson_content[:4000]}
+
+    Requirements:
+    - Include exactly 4 distinct options per question.
+    - Indicate the exact correct_answer.
+    - Provide a helpful Socratic hint that guides the student without giving away the answer.
+    - Include a "difficulty" property set to "Easy", "Medium", or "Hard" (provide a mix of difficulties).
+
+    Respond with ONLY a JSON object containing a "questions" array:
+    {{
+      "questions": [
+        {{
+          "id": "q_{str(uuid.uuid4())[:8]}",
+          "question": "Question text?",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "correct_answer": "Option A",
+          "hint": "Guiding hint",
+          "difficulty": "Easy"
+        }}
+      ]
+    }}
+    """
+
+    models_to_try = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"]
+    for model_name in models_to_try:
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": "You are an expert assessment educator creating multiple-choice questions with difficulty tags."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                max_tokens=1500
+            )
+            data = json.loads(response.choices[0].message.content or "{}")
+            questions_data = data.get("questions", [])
+            questions = []
+            for item in questions_data:
+                if not item.get("id"):
+                    item["id"] = f"q_{uuid.uuid4().hex[:6]}"
+                if not item.get("difficulty"):
+                    item["difficulty"] = "Medium"
+                questions.append(QuizQuestion(**item))
+            if questions:
+                return questions
+        except Exception as e:
+            print(f"Quiz generation with {model_name} failed: {e}")
+
+    # Fallback default questions if LLM is unavailable
+    return [
+        QuizQuestion(
+            id=f"q_{uuid.uuid4().hex[:6]}",
+            question=f"Which key conceptual principle is demonstrated in '{lesson_title}'?",
+            options=[
+                "Linear independence of internal features",
+                "Non-linear mapping enabling higher capacity representations",
+                "Strict adherence to fixed convex optimization without bounds",
+                "Deterministic weight initialization with uniform bias"
+            ],
+            correct_answer="Non-linear mapping enabling higher capacity representations",
+            hint="Consider how complex representations require transformations beyond simple affine combinations.",
+            difficulty="Medium"
+        ),
+        QuizQuestion(
+            id=f"q_{uuid.uuid4().hex[:6]}",
+            question=f"What primary engineering advantage does the architecture described in '{lesson_title}' provide?",
+            options=[
+                "Reduces memory consumption to zero during forward inference",
+                "Provides mathematical tractability and systematic error backpropagation",
+                "Eliminates the necessity for training data",
+                "Forces all gradient updates to zero"
+            ],
+            correct_answer="Provides mathematical tractability and systematic error backpropagation",
+            hint="Think about how optimization algorithms navigate the loss surface systematically.",
+            difficulty="Hard"
+        )
+    ]
 
 def get_socratic_response(context: str, user_message: str) -> str:
     response = client.chat.completions.create(

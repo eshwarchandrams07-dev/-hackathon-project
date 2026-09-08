@@ -23,5 +23,8 @@ dist-ssr/
 .vscode/
 .idea/
 .DS_Store
-Thumbs.db
-*.log
+# Database
+*.db
+*.sqlite
+*.sqlite3
+

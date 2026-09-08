@@ -1,15 +1,42 @@
 import os
 import uuid
 import pymupdf
-from typing import Dict
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from typing import Dict, List, Optional
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from app.schemas import UploadResponse, GenerateCourseRequest, Course, Module, ChatRequest, ChatResponse
+from app.schemas import (
+    UploadResponse, 
+    GenerateCourseRequest, 
+    Course, 
+    Module, 
+    ChatRequest, 
+    ChatResponse, 
+    ChatMessageSchema,
+    SaveChatMessageRequest,
+    ChatHistoryResponse,
+    ClearChatRequest,
+    QuizQuestion, 
+    RegenerateQuizRequest
+)
 from app.rag_engine import process_pdf, ask_socratic_tutor, generate_course_outline
 from app.pdf_parser import extract_text_from_pdf
-from app.llm_service import generate_course_from_text, get_socratic_response
+from app.llm_service import generate_course_from_text, get_socratic_response, generate_quiz_for_lesson
+from app.database import (
+    init_db,
+    add_chat_message,
+    get_chat_messages,
+    clear_chat_messages
+)
 
-app = FastAPI(title="Hackathon LMS API")
+app = FastAPI(title="MindForge AI LMS API")
+
+@app.on_event("startup")
+def on_startup():
+    try:
+        init_db()
+        print("MindForge SQLite Database initialized successfully.")
+    except Exception as e:
+        print(f"Warning: Database initialization error: {e}")
 
 # This allows your frontend code to talk to your backend without security blocks
 app.add_middleware(
@@ -113,13 +140,122 @@ async def generate_course(payload: GenerateCourseRequest):
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(payload: ChatRequest):
+    session_id = payload.session_id or "default_session"
+    user_id = payload.user_id or "default_user"
+    lesson_id = payload.lesson_id
+
+    # 1. Automatically save user message to chat history
+    try:
+        add_chat_message(
+            session_id=session_id,
+            user_id=user_id,
+            role="user",
+            content=payload.user_message,
+            lesson_id=lesson_id
+        )
+    except Exception as db_err:
+        print(f"Warning: Failed to save user message to DB: {db_err}")
+
+    # 2. Generate Socratic AI response
+    citations = None
     try:
         tutor_result = ask_socratic_tutor(payload.user_message)
-        return ChatResponse(reply=tutor_result["answer"])
+        reply_text = tutor_result.get("answer", "")
+        citations = tutor_result.get("citations", None)
     except Exception as e:
         print(f"RAG tutor error, using Groq LLM fallback: {e}")
         try:
-            fallback_answer = get_socratic_response(payload.lesson_context, payload.user_message)
-            return ChatResponse(reply=fallback_answer)
+            reply_text = get_socratic_response(payload.lesson_context, payload.user_message)
         except Exception as e2:
-            raise HTTPException(status_code=500, detail=f"Chat failed: {str(e2)}")
+            raise HTTPException(status_code=500, detail=f"Chat failed: {str(e2)}")
+
+    # 3. Automatically save assistant reply to chat history
+    msg_id = None
+    ts = None
+    try:
+        saved = add_chat_message(
+            session_id=session_id,
+            user_id=user_id,
+            role="assistant",
+            content=reply_text,
+            citations=citations,
+            lesson_id=lesson_id
+        )
+        msg_id = saved.get("id")
+        ts = saved.get("timestamp")
+    except Exception as db_err:
+        print(f"Warning: Failed to save tutor reply to DB: {db_err}")
+
+    return ChatResponse(
+        reply=reply_text,
+        message_id=msg_id,
+        timestamp=ts,
+        citations=citations
+    )
+
+@app.get("/api/chat/history", response_model=ChatHistoryResponse)
+def get_history(
+    session_id: str = Query(default="default_session", description="Session identifier"),
+    lesson_id: Optional[str] = Query(default=None, description="Optional lesson filter"),
+    limit: int = Query(default=200, ge=1, le=500, description="Max messages to return")
+):
+    try:
+        messages = get_chat_messages(session_id=session_id, lesson_id=lesson_id, limit=limit)
+        return ChatHistoryResponse(
+            session_id=session_id,
+            messages=[ChatMessageSchema(**m) for m in messages],
+            count=len(messages)
+        )
+    except Exception as e:
+        print(f"Error fetching chat history: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve chat history: {str(e)}")
+
+@app.post("/api/chat/save", response_model=ChatMessageSchema)
+def save_chat_message_endpoint(payload: SaveChatMessageRequest):
+    try:
+        saved = add_chat_message(
+            session_id=payload.session_id or "default_session",
+            user_id=payload.user_id or "default_user",
+            role=payload.role,
+            content=payload.content,
+            citations=payload.citations,
+            timestamp=payload.timestamp,
+            lesson_id=payload.lesson_id,
+            msg_id=payload.id
+        )
+        return ChatMessageSchema(**saved)
+    except Exception as e:
+        print(f"Error saving chat message: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save message: {str(e)}")
+
+@app.delete("/api/chat/history")
+def clear_history(
+    session_id: str = Query(default="default_session", description="Session identifier to clear"),
+    lesson_id: Optional[str] = Query(default=None, description="Optional lesson filter")
+):
+    try:
+        deleted_count = clear_chat_messages(session_id=session_id, lesson_id=lesson_id)
+        return {
+            "status": "success",
+            "session_id": session_id,
+            "lesson_id": lesson_id,
+            "deleted_count": deleted_count
+        }
+    except Exception as e:
+        print(f"Error clearing chat history: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear chat history: {str(e)}")
+
+
+@app.post("/api/regenerate-quiz", response_model=List[QuizQuestion])
+async def regenerate_quiz(payload: RegenerateQuizRequest):
+    try:
+        num_q = payload.num_questions or 2
+        questions = generate_quiz_for_lesson(
+            lesson_title=payload.lesson_title,
+            lesson_content=payload.lesson_content or "",
+            num_questions=num_q
+        )
+        return questions
+    except Exception as e:
+        print(f"Quiz regeneration error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate quiz: {str(e)}")

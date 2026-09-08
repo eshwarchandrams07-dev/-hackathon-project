@@ -15,6 +15,7 @@ class QuizQuestion(BaseModel):
     options: List[str] = Field(description="Exactly 4 multiple choice options")
     correct_answer: str = Field(description="The exact text of the correct option")
     hint: str = Field(description="A guiding Socratic hint")
+    difficulty: Optional[str] = Field(default="Medium", description="Difficulty: Easy, Medium, or Hard")
 
 class Lesson(BaseModel):
     lesson_id: str = Field(description="Unique identifier, e.g., 'lesson_1'")
@@ -47,6 +48,45 @@ class ChatRequest(BaseModel):
     lesson_context: str
     user_message: str
     history: List[dict] = Field(default_factory=list)
+    session_id: Optional[str] = Field(default="default_session", description="Session identifier for history")
+    lesson_id: Optional[str] = Field(default=None, description="Lesson identifier for history")
+    user_id: Optional[str] = Field(default="default_user", description="User identifier")
 
 class ChatResponse(BaseModel):
     reply: str
+    message_id: Optional[str] = None
+    timestamp: Optional[int] = None
+    citations: Optional[List[int]] = None
+
+class ChatMessageSchema(BaseModel):
+    id: str
+    role: str
+    content: str
+    timestamp: int
+    session_id: Optional[str] = "default_session"
+    lesson_id: Optional[str] = None
+    citations: Optional[List[int]] = None
+
+class SaveChatMessageRequest(BaseModel):
+    id: Optional[str] = None
+    role: str
+    content: str
+    timestamp: Optional[int] = None
+    session_id: Optional[str] = "default_session"
+    lesson_id: Optional[str] = None
+    user_id: Optional[str] = "default_user"
+    citations: Optional[List[int]] = None
+
+class ChatHistoryResponse(BaseModel):
+    session_id: str
+    messages: List[ChatMessageSchema]
+    count: int
+
+class ClearChatRequest(BaseModel):
+    session_id: Optional[str] = "default_session"
+    lesson_id: Optional[str] = None
+
+class RegenerateQuizRequest(BaseModel):
+    lesson_title: str
+    lesson_content: Optional[str] = ""
+    num_questions: Optional[int] = 2
