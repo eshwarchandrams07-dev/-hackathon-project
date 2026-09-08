@@ -105,17 +105,12 @@ Student Question: {user_query}
             "citations": citations
         }
     except Exception as e:
-        print(f"[Notice] Gemini tutor API unavailable ({e}). Using document context tutor fallback.")
-        top_snippet = context_data[0]["text"] if context_data else "the uploaded course material"
-        top_page = citations[0] if citations else 1
+        print(f"[Notice] Gemini tutor API unavailable ({e}). Using intelligent Socratic engine.")
+        from app.socratic_engine import generate_intelligent_socratic_reply
+        answer = generate_intelligent_socratic_reply(context_str, user_query)
         return {
-            "answer": (
-                f"Let's reason through this using your course material!\n\n"
-                f"Referencing slide / page {top_page}:\n"
-                f"> \"{top_snippet[:260].strip()}...\"\n\n"
-                f"Notice how the core concept is presented here. What do you think happens if this mechanism is altered or executed?"
-            ),
-            "citations": citations
+            "answer": answer,
+            "citations": citations or [1]
         }
 
 def generate_course_outline(topic: str) -> str:

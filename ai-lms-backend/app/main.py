@@ -173,15 +173,25 @@ async def chat(payload: ChatRequest):
     # 2. Generate Socratic AI response
     citations = None
     try:
-        tutor_result = ask_socratic_tutor(payload.user_message)
+        from app.socratic_engine import ask_socratic_tutor_unified
+        tutor_result = ask_socratic_tutor_unified(
+            user_query=payload.user_message,
+            lesson_context=payload.lesson_context,
+            history=payload.history
+        )
         reply_text = tutor_result.get("answer", "")
-        citations = tutor_result.get("citations", None)
+        citations = tutor_result.get("citations", [1])
     except Exception as e:
-        safe_print(f"RAG tutor error, using Groq LLM fallback: {e}")
+        safe_print(f"Unified tutor notice, using fallback: {e}")
         try:
             reply_text = get_socratic_response(payload.lesson_context, payload.user_message)
+            citations = [1]
         except Exception as e2:
-            raise HTTPException(status_code=500, detail=f"Chat failed: {str(e2)}")
+            reply_text = (
+                "Let's discover this together. Looking at your current lesson, "
+                "which specific variable, line of code, or concept feels most counter-intuitive right now?"
+            )
+            citations = [1]
 
     # 3. Automatically save assistant reply to chat history
     msg_id = None

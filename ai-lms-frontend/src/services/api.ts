@@ -332,20 +332,76 @@ class ApiService {
    * Local Socratic fallback response in case the backend is offline
    */
   generateFallbackSocraticReply(userMessage: string, lessonTitle?: string): string {
-    const normalized = userMessage.toLowerCase();
-    if (normalized.includes('bias')) {
+    const q = userMessage.toLowerCase();
+
+    // 1. Code & Line-by-Line Breakdown Request
+    if (q.includes('code') || q.includes('line') || q.includes('program') || q.includes('printf') || q.includes('scanf')) {
+      if (q.includes('fcfs') || (lessonTitle && lessonTitle.toLowerCase().includes('fcfs'))) {
+        return `### [Code Breakdown] FCFS Algorithm Line-by-Line\n\n` +
+          `Here is how the First-Come, First-Served C program works step-by-step:\n\n` +
+          `1. **Burst Time Input Loop**:\n` +
+          `   \`for (i = 0; i < n; i++) scanf("%d", &bt[i]);\`\n` +
+          `   Collects the CPU execution duration required by each process in arrival order.\n\n` +
+          `2. **Waiting Time Initialization**:\n` +
+          `   \`wt[0] = 0;\`\n` +
+          `   The first process to arrive executes immediately without waiting.\n\n` +
+          `3. **Cumulative Waiting Time Calculation**:\n` +
+          `   \`wt[i] = wt[i-1] + bt[i-1];\`\n` +
+          `   Each subsequent process must wait for the previous process's wait time plus its execution burst.\n\n` +
+          `4. **Turnaround Time**:\n` +
+          `   \`tat[i] = bt[i] + wt[i];\`\n` +
+          `   Total time from arrival to completion.\n\n` +
+          `---\n\n` +
+          `**[Socratic Question]**: What happens if the first process has an enormous burst time (e.g. 100ms) while all subsequent processes need only 1ms? How does this "Convoy Effect" impact overall throughput?`;
+      }
+      return `### [Code Breakdown] Program Logic Walkthrough\n\n` +
+        `Let's trace how this algorithm executes:\n\n` +
+        `1. **Initialization**: Variables and state buffers are configured.\n` +
+        `2. **Sequential Traversal**: The loop processes each item according to its priority or arrival order.\n` +
+        `3. **State Accumulation**: Output metrics are computed based on cumulative dependencies.\n\n` +
+        `**[Socratic Question]**: Which specific line of code represents the main state invariant or computational bottleneck?`;
+    }
+
+    // 2. Analogy Request
+    if (q.includes('analogy') || q.includes('metaphor') || q.includes('real life') || q.includes('real world')) {
+      return `### [Analogy] The Single-Lane Checkout Counter\n\n` +
+        `Imagine a supermarket with a **single cashier**:\n\n` +
+        `* **Customer 1** has 200 items in their cart (Large CPU burst time).\n` +
+        `* **Customer 2** has just a pack of gum (Tiny CPU burst time).\n` +
+        `* Under First-Come, First-Served, Customer 2 is forced to wait for all 200 items to be scanned before buying their gum!\n\n` +
+        `This is the classic **Convoy Effect**. How would an express lane (like Shortest Job First) alter customer satisfaction?`;
+    }
+
+    // 3. Formula & Calculation Request
+    if (q.includes('calculate') || q.includes('formula') || q.includes('math') || q.includes('waiting time') || q.includes('turnaround')) {
+      return `### [Formulas] Key Scheduling Metrics\n\n` +
+        `* **Waiting Time (WT)**: WT[0] = 0; WT[i] = WT[i-1] + BT[i-1]\n` +
+        `* **Turnaround Time (TAT)**: TAT[i] = Burst Time[i] + Waiting Time[i]\n` +
+        `* **Average Waiting Time**: Sum(WT) / Total Processes\n\n` +
+        `**[Socratic Question]**: If three processes have burst times 6ms, 8ms, and 2ms, what is the waiting time of the third process under FCFS?`;
+    }
+
+    // 4. Advantages & Disadvantages
+    if (q.includes('advantage') || q.includes('disadvantage') || q.includes('pros') || q.includes('cons') || q.includes('vs')) {
+      return `### [Analysis] Trade-Off Summary\n\n` +
+        `* **Advantages**: Simple to implement, fair arrival ordering, zero starvation.\n` +
+        `* **Disadvantages**: High average waiting time, poor interactive performance due to the Convoy Effect.\n\n` +
+        `**[Socratic Question]**: In what type of system (batch processing vs real-time interactive) would this approach be most suitable?`;
+    }
+
+    if (q.includes('bias')) {
       return "Notice what happens when you substitute x = 0 into z = w · x + b. If b was not present, the line would be constrained to cross the origin (0,0). How would that restrict a model trying to separate points that lie entirely above the origin?";
     }
-    if (normalized.includes('xor') || normalized.includes('linear')) {
+    if (q.includes('xor') || q.includes('linear')) {
       return "Imagine placing four pins on a board at (0,0), (0,1), (1,0), and (1,1). The diagonal pairs have the same label. Can you place a single rigid ruler anywhere on the board that keeps identical pairs on one side and different pairs on the other? Why does this require an additional dimension or hidden layer?";
     }
-    if (normalized.includes('relu') || normalized.includes('activation')) {
+    if (q.includes('relu') || q.includes('activation')) {
       return "Consider the derivative of ReLU for positive numbers compared to the derivative of Sigmoid. Why would gradients vanish when multiplying many numbers smaller than 0.25 in deep Sigmoid networks, whereas ReLU maintains a gradient of 1?";
     }
-    if (normalized.includes('hint') || normalized.includes('quiz')) {
+    if (q.includes('hint') || q.includes('quiz')) {
       return `Think carefully about the foundational assumption of ${lessonTitle || 'this concept'}. What is the single constraint that changes when we introduce non-linearities or additional parameters?`;
     }
-    return `That's a thoughtful question regarding ${lessonTitle || 'this topic'}. Rather than giving the conclusion directly: which specific part of the mathematical formula or biological analogy feels most counter-intuitive to you right now?`;
+    return `That is an interesting inquiry regarding ${lessonTitle || 'this topic'}. To discover the core intuition together: which specific line of code or step in the execution process feels most counter-intuitive to you right now?`;
   }
 
   /**

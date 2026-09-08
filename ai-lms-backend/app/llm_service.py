@@ -656,6 +656,7 @@ def generate_quiz_for_lesson(lesson_title: str, lesson_content: str, num_questio
     ]
 
 def get_socratic_response(context: str, user_message: str) -> str:
+    # 1. Try Groq API
     groq_key = os.getenv("GROQ_API_KEY", "").strip()
     if groq_key and not groq_key.startswith("placeholder") and not groq_key.startswith("your_") and len(groq_key) > 10:
         try:
@@ -663,7 +664,7 @@ def get_socratic_response(context: str, user_message: str) -> str:
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": f"Act as an encouraging Socratic tutor. Guide the student without giving direct answers. Use this context: {context}"},
+                    {"role": "system", "content": f"Act as an encouraging Socratic tutor. Guide the student thoroughly without giving direct answers if it's a test problem. Explain code line by line if requested. Use this context: {context}"},
                     {"role": "user", "content": user_message}
                 ]
             )
@@ -671,10 +672,30 @@ def get_socratic_response(context: str, user_message: str) -> str:
         except Exception as e:
             print(f"Groq Socratic response notice: {e}")
 
-    # Fallback Socratic dialogue
-    snippet = context[:250].strip() if context else "the current course material"
-    return (
-        f"Great inquiry! In your course material, consider this key principle:\n\n"
-        f"> \"{snippet}...\"\n\n"
-        f"How does this fundamental concept shape the way you would design or evaluate your solution?"
-    )
+    # 2. Try Gemini API
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if gemini_key and not gemini_key.startswith("placeholder") and not gemini_key.startswith("your_") and len(gemini_key) > 10:
+        try:
+            from google import genai
+            g_client = genai.Client(api_key=gemini_key)
+            prompt = f"Act as an encouraging Socratic tutor. Explain code or concepts thoroughly using context:\n{context}\n\nStudent question:\n{user_message}"
+            res = g_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+            if res.text and len(res.text.strip()) > 20:
+                return res.text.strip()
+        except Exception as e:
+            print(f"Gemini Socratic response notice: {e}")
+
+    # 3. Dynamic Context-Aware Socratic Engine
+    try:
+        from app.socratic_engine import generate_intelligent_socratic_reply
+        return generate_intelligent_socratic_reply(context, user_message)
+    except Exception as e:
+        print(f"Fallback generation notice: {e}")
+        return (
+            f"You asked about: \"{user_message}\"\n\n"
+            f"Let's trace this through the lesson content. Look at the core algorithm or concept presented in your notes. "
+            f"Which specific variable or step in the execution flow do you want to explore first?"
+        )
