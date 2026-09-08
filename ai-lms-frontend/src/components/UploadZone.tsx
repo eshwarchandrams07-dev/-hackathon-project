@@ -193,25 +193,25 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
   const isProcessing = currentStep === 'uploading' || currentStep === 'processing_rag' || currentStep === 'generating_course';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in">
-      <div className="bg-[#0f1523] border border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white border border-[#D9E2EC] rounded-2xl p-6 max-w-lg w-full shadow-2xl relative text-[#243B53]">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800/80">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400">
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#D9E2EC]">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-xl bg-[#E6F8FB] border border-[#00A3BF]/30 flex items-center justify-center text-[#00A3BF]">
               <UploadCloud className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">Ingest Course Material</h3>
-              <p className="text-[11px] text-slate-400">Upload PDF textbook notes, slides, or syllabus</p>
+              <h3 className="text-sm font-bold text-[#102A43]">Ingest Course Material</h3>
+              <p className="text-[11px] text-[#627D98]">Upload PDF textbook notes, slides, or syllabus</p>
             </div>
           </div>
 
           <button
             onClick={() => onClose?.()}
             disabled={isProcessing}
-            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 disabled:opacity-40 transition"
+            className="p-1.5 rounded-lg text-[#627D98] hover:text-[#102A43] hover:bg-[#F0F4F8] disabled:opacity-40 transition cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -226,12 +226,12 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
+              className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
                 dragActive
-                  ? 'border-brand-500 bg-brand-500/5'
+                  ? 'border-[#00A3BF] bg-[#E6F8FB]'
                   : selectedFile
-                  ? 'border-brand-500/40 bg-slate-900/60'
-                  : 'border-slate-800 hover:border-slate-700 bg-slate-950/40 hover:bg-slate-950/60'
+                  ? 'border-[#00A3BF]/50 bg-[#E6F8FB]/30'
+                  : 'border-[#D9E2EC] hover:border-[#00A3BF]/50 bg-[#F0F4F8]/50 hover:bg-[#F0F4F8]'
               }`}
             >
               <input
@@ -245,12 +245,12 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
               {selectedFile ? (
                 <div className="flex items-center justify-between gap-3 text-left">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-9 w-9 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 shrink-0">
+                    <div className="h-9 w-9 rounded-lg bg-[#E6F8FB] border border-[#00A3BF]/30 flex items-center justify-center text-[#00A3BF] shrink-0">
                       <FileText className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-white truncate">{selectedFile.name}</p>
-                      <p className="text-[10px] text-slate-500">{formatFileSize(selectedFile.size)} • PDF Ready</p>
+                      <p className="text-xs font-bold text-[#102A43] truncate">{selectedFile.name}</p>
+                      <p className="text-[10px] text-[#627D98]">{formatFileSize(selectedFile.size)} • PDF Ready</p>
                     </div>
                   </div>
                   <button
@@ -260,20 +260,20 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
                       setSelectedFile(null);
                       setErrorMessage('');
                     }}
-                    className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 shrink-0"
+                    className="p-1 rounded-md text-[#627D98] hover:text-rose-600 hover:bg-rose-50 shrink-0"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-2">
-                  <div className="h-9 w-9 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 mb-2">
-                    <UploadCloud className="h-4 w-4 text-slate-300" />
+                  <div className="h-10 w-10 rounded-xl bg-white border border-[#D9E2EC] flex items-center justify-center text-[#00A3BF] mb-2 shadow-xs">
+                    <UploadCloud className="h-5 w-5" />
                   </div>
-                  <p className="text-xs font-medium text-slate-200">
+                  <p className="text-xs font-bold text-[#102A43]">
                     Click to browse or drag PDF here
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
+                  <p className="text-[10px] text-[#627D98] mt-0.5">
                     PDF format • Up to 25MB
                   </p>
                 </div>
@@ -282,20 +282,20 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
 
             {/* Error banner */}
             {errorMessage && (
-              <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2">
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-rose-400" />
+              <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 text-xs flex items-start gap-2">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-rose-600" />
                 <div className="flex-1 text-[11px]">{errorMessage}</div>
               </div>
             )}
 
             {/* Bottom Actions */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex items-center gap-2 text-xs text-[#627D98]">
                 <span className="text-[11px]">Or test with:</span>
                 <button
                   type="button"
                   onClick={handleLoadSamplePdf}
-                  className="text-[11px] text-brand-400 hover:text-brand-300 underline underline-offset-2 transition"
+                  className="text-[11px] text-[#00A3BF] hover:text-[#008CA4] font-semibold underline underline-offset-2 transition cursor-pointer"
                 >
                   Compiler PDF
                 </button>
@@ -303,7 +303,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
                 <button
                   type="button"
                   onClick={handleLoadSampleCourse}
-                  className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-2 transition"
+                  className="text-[11px] text-[#7B61FF] hover:text-[#6348EE] font-semibold underline underline-offset-2 transition cursor-pointer"
                 >
                   Demo Course
                 </button>
@@ -313,7 +313,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
                 <button
                   type="button"
                   onClick={handleStartIngestion}
-                  className="w-full sm:w-auto px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium flex items-center justify-center gap-1.5 transition shadow-sm"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#00A3BF] hover:bg-[#008CA4] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
                 >
                   <span>Build Curriculum</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -324,38 +324,38 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
         ) : (
           /* Processing State */
           <div className="py-4 space-y-4">
-            <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span className="font-medium text-slate-200 flex items-center gap-2">
+            <div className="flex items-center justify-between text-xs text-[#627D98] mb-1">
+              <span className="font-bold text-[#102A43] flex items-center gap-2">
                 {currentStep === 'complete' ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 ) : (
-                  <Loader2 className="h-4 w-4 animate-spin text-brand-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-[#00A3BF]" />
                 )}
                 <span>{statusMessage}</span>
               </span>
-              <span className="font-mono text-[11px]">{progressPercent}%</span>
+              <span className="font-mono text-[11px] text-[#00A3BF] font-bold">{progressPercent}%</span>
             </div>
 
             {/* Progress Bar */}
-            <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800/80">
+            <div className="h-2 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
               <div
-                className="h-full bg-brand-500 transition-all duration-300 rounded-full"
+                className="h-full bg-gradient-to-r from-[#00A3BF] to-[#7B61FF] transition-all duration-300 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
 
             {/* Stepper */}
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/60 text-[11px]">
-              <div className={`flex items-center gap-1.5 ${progressPercent >= 25 ? 'text-slate-200' : 'text-slate-500'}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${progressPercent >= 25 ? 'bg-brand-400' : 'bg-slate-700'}`} />
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#D9E2EC] text-[11px]">
+              <div className={`flex items-center gap-1.5 ${progressPercent >= 25 ? 'text-[#102A43] font-semibold' : 'text-[#627D98]'}`}>
+                <span className={`h-2 w-2 rounded-full ${progressPercent >= 25 ? 'bg-[#00A3BF]' : 'bg-[#CBD5E1]'}`} />
                 <span>1. Upload</span>
               </div>
-              <div className={`flex items-center gap-1.5 ${progressPercent >= 55 ? 'text-slate-200' : 'text-slate-500'}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${progressPercent >= 55 ? 'bg-brand-400' : 'bg-slate-700'}`} />
+              <div className={`flex items-center gap-1.5 ${progressPercent >= 55 ? 'text-[#102A43] font-semibold' : 'text-[#627D98]'}`}>
+                <span className={`h-2 w-2 rounded-full ${progressPercent >= 55 ? 'bg-[#00A3BF]' : 'bg-[#CBD5E1]'}`} />
                 <span>2. Index</span>
               </div>
-              <div className={`flex items-center gap-1.5 ${progressPercent >= 85 ? 'text-slate-200' : 'text-slate-500'}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${progressPercent >= 85 ? 'bg-brand-400' : 'bg-slate-700'}`} />
+              <div className={`flex items-center gap-1.5 ${progressPercent >= 85 ? 'text-[#102A43] font-semibold' : 'text-[#627D98]'}`}>
+                <span className={`h-2 w-2 rounded-full ${progressPercent >= 85 ? 'bg-[#7B61FF]' : 'bg-[#CBD5E1]'}`} />
                 <span>3. Synthesize</span>
               </div>
             </div>

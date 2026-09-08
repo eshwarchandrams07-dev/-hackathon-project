@@ -8,30 +8,44 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: {
-          DEFAULT: '#090d16',
-          secondary: '#0f172a',
-          tertiary: '#1e293b',
+        foundation: {
+          blue: '#102A43',
+          dark: '#0B1D30',
+          hover: '#1B3A57',
         },
-        brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+        aether: {
+          purple: '#7B61FF',
+          dark: '#6348EE',
+          light: '#F3F0FF',
+          border: 'rgba(123, 97, 255, 0.35)',
         },
-        accent: {
-          cyan: '#06b6d4',
-          emerald: '#10b981',
-          violet: '#8b5cf6',
-          amber: '#f59e0b',
-          rose: '#f43f5e',
-        }
+        quantum: {
+          teal: '#00A3BF',
+          dark: '#008CA4',
+          light: '#E6F8FB',
+          border: 'rgba(0, 163, 191, 0.35)',
+        },
+        studio: {
+          white: '#F0F4F8',
+          card: '#FFFFFF',
+          hover: '#F8FAFC',
+          border: '#D9E2EC',
+        },
+        charcoal: {
+          text: '#243B53',
+          muted: '#627D98',
+          subtle: '#829AB1',
+          heading: '#102A43',
+        },
+        // Direct theme tokens matching the image roles:
+        primary: '#102A43',    // Foundation Blue (Major UI, structure, headers)
+        secondary: '#7B61FF',  // Aether Purple (AI accent, insights, Socratic)
+        accent: '#00A3BF',     // Quantum Teal (CTAs, buttons, progress)
+        canvas: '#F0F4F8',     // Studio White (Background)
+        neutral: '#243B53',    // Charcoal Text (Body text)
+        surface: '#FFFFFF',    // Pure White Card
+        border: '#D9E2EC',     // Clean subtle border
+        muted: '#627D98',      // Muted slate text
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],

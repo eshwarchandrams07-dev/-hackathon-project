@@ -1,0 +1,52 @@
+/* 
+ * Simple & Professional AI LMS Color Palette
+ * Hex References:
+ *   #102A43 - Foundation Blue (Primary: Headers, Sidebar, Structure)
+ *   #7B61FF - Aether Purple (Secondary / AI Accent: Socratic AI, Insights)
+ *   #00A3BF - Quantum Teal (Action / CTAs: Primary Buttons, Links, Progress)
+ *   #F0F4F8 - Studio White (Background Canvas, Reduces Eye Fatigue)
+ *   #243B53 - Charcoal Text (Neutral / Text: High-contrast Body & Headings)
+ */
+
+:root {
+  --color-foundation-blue: #102A43;
+  --color-aether-purple: #7B61FF;
+  --color-quantum-teal: #00A3BF;
+  --color-studio-white: #F0F4F8;
+  --color-charcoal-text: #243B53;
+  --color-muted-text: #627D98;
+
+  /* Surfaces */
+  --color-bg-canvas: #F0F4F8;
+  --color-card-surface: #FFFFFF;
+  --color-card-hover: #F8FAFC;
+  --color-border-subtle: #D9E2EC;
+  --color-border-focus: #00A3BF;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-canvas);
+  color: var(--color-charcoal-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  min-height: 100vh;
+}
+
+/* Primary AI LMS Utility Classes */
+.bg-foundation-blue { background-color: var(--color-foundation-blue); }
+.bg-aether-purple { background-color: var(--color-aether-purple); }
+.bg-quantum-teal { background-color: var(--color-quantum-teal); }
+.bg-studio-white { background-color: var(--color-studio-white); }
+.bg-card-surface { background-color: var(--color-card-surface); }
+
+.text-foundation-blue { color: var(--color-foundation-blue); }
+.text-aether-purple { color: var(--color-aether-purple); }
+.text-quantum-teal { color: var(--color-quantum-teal); }
+.text-charcoal { color: var(--color-charcoal-text); }
+.text-muted { color: var(--color-muted-text); }
+
+.border-subtle { border-color: var(--color-border-subtle); }
+.border-quantum-teal { border-color: var(--color-quantum-teal); }
+.border-aether-purple { border-color: var(--color-aether-purple); }
+

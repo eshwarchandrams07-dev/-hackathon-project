@@ -331,32 +331,72 @@ class ApiService {
   /**
    * Local Socratic fallback response in case the backend is offline
    */
-  generateFallbackSocraticReply(userMessage: string, lessonTitle?: string): string {
+  generateFallbackSocraticReply(userMessage: string, lessonTitle?: string, studyMode?: 'deep' | 'quick' | 'prompt'): string {
     const q = userMessage.toLowerCase().trim();
+    const topic = lessonTitle || 'this topic';
 
-    // 0. Pure Greeting / Intro / Small Talk
+    // 0. Option 1: Deep Study Selection
+    if (q === '1' || q === '1.' || q === 'option 1' || q.includes('deep study')) {
+      return `### 🧠 Deep Study Mode Activated: ${topic}\n\n` +
+        `I am ready to help you thoroughly understand every concept from first principles!\n\n` +
+        `**In Deep Study mode, we will explore:**\n` +
+        `* 🔍 **First Principles**: Why this system was designed and what fundamental engineering problem it solves.\n` +
+        `* ⚙️ **Underlying Mechanics**: Step-by-step walkthrough of algorithms, state transitions, and variables.\n` +
+        `* 💡 **Real-World Analogies**: Relatable mental models to make abstract theory concrete.\n` +
+        `* ❓ **Socratic Inquiries**: Probing questions that test your deep understanding before exams.\n\n` +
+        `---\n\n` +
+        `**What concept would you like to explore first?**\n` +
+        `*(e.g., "Explain how the algorithm executes line-by-line", "Give me a real-world analogy", or "Why does the convoy effect happen?")*`;
+    }
+
+    // 0b. Option 2: Quick Run Selection & Mind Map Generation
+    if (q === '2' || q === '2.' || q === 'option 2' || q.includes('quick run') || q.includes('mind map')) {
+      return `### ⚡ Quick Run Mode: High-Yield Exam Review & Mind Map\n\n` +
+        `Here is your high-speed breakdown of **${topic}**, focusing on core exam topics, visual mind maps, and key formulas:\n\n` +
+        `\`\`\`\n` +
+        `🗺️ CONCEPT MIND MAP: ${topic.toUpperCase()}\n` +
+        `├── 🎯 Core Invariant & Purpose\n` +
+        `│   ├── Primary Goal: Deterministic execution & optimal resource throughput\n` +
+        `│   └── Base Mechanism: Ready queue traversal in arrival / priority order\n` +
+        `├── ⚙️ Key Execution Phases\n` +
+        `│   ├── 1. Input Collection: Process ID & Burst Time (BT) registration\n` +
+        `│   ├── 2. Cumulative Scheduling: Non-preemptive sequential execution\n` +
+        `│   └── 3. Metric Calculation: Completion Time, Waiting Time, Turnaround Time\n` +
+        `├── ⚡ Must-Know Formulas (High-Yield for Numericals)\n` +
+        `│   ├── Waiting Time (WT[i]) = WT[i-1] + BT[i-1] (where WT[0] = 0)\n` +
+        `│   ├── Turnaround Time (TAT[i]) = Burst Time[i] + Waiting Time[i]\n` +
+        `│   └── Average WT = Σ(WT[i]) / N\n` +
+        `└── ⚠️ Critical Traps & Edge Cases\n` +
+        `    ├── The Convoy Effect: Large burst jobs block short I/O jobs\n` +
+        `    └── Non-preemptive: Cannot interrupt long-running tasks\n` +
+        `\`\`\`\n\n` +
+        `### 🎯 3 High-Yield Exam Takeaways:\n` +
+        `1. **Gantt Chart**: Always draw the Gantt chart starting at time 0 before calculating waiting time.\n` +
+        `2. **Convoy Effect**: First-Come, First-Served degrades heavily when CPU-heavy processes monopolize the processor.\n` +
+        `3. **Turnaround vs Waiting**: Turnaround Time includes the process's execution burst; Waiting Time is only the delay in queue.\n\n` +
+        `---\n\n` +
+        `**What would you like a quick-run mind map or cheat sheet for next?**\n` +
+        `*(e.g., "Show me a numerical problem walkthrough", "Give me another mind map", or "Top 5 viva questions")*`;
+    }
+
+    // 0c. Pure Greeting / Intro / Small Talk
     const words = q.replace(/[^a-z\s]/g, '').split(/\s+/).filter(Boolean);
     const greetingWords = new Set(['hi', 'hello', 'hey', 'hola', 'yo', 'sup', 'morning', 'afternoon', 'evening']);
     const isPureGreeting = words.length > 0 && words.every(w => greetingWords.has(w) || ['there', 'tutor', 'bot', 'assistant', 'mindforge'].includes(w));
     const isIntro = q.includes('who are you') || q.includes('what can you do') || q.includes('help me') || q.includes('how does this work');
 
     if (isPureGreeting || isIntro) {
-      return `### [Socratic Tutor] Hello! Welcome to MindForge\n\n` +
-        `Welcome to your study session on **${lessonTitle || 'this topic'}**!\n\n` +
-        `I am your Socratic AI Study Companion. Rather than simply giving static answers, I guide your intuition through interactive inquiry.\n\n` +
-        `**Here are some things you can ask me:**\n` +
-        `* **Code Breakdown**: *"Explain the code line by line"*\n` +
-        `* **Intuitive Analogy**: *"Give me a real-world analogy"*\n` +
-        `* **Math & Formulas**: *"Show me the calculation steps"*\n` +
-        `* **Trade-Offs**: *"What are the advantages and disadvantages?"*\n` +
-        `* **Quiz Guidance**: *"Give me a hint on the quiz"*\n\n` +
-        `---\n\n` +
-        `**What would you like to explore first?** Type any question or click one of the quick prompt buttons below!`;
+      return `### [Socratic Tutor] Hello! Welcome to Phoenix AI LMS\n\n` +
+        `Welcome to your study session on **${topic}**!\n\n` +
+        `**Please choose how you'd like to study:**\n\n` +
+        `1️⃣ **Option 1: Deep Study** — Thorough step-by-step guidance to deeply understand the concept, underlying mechanics, and analogies.\n\n` +
+        `2️⃣ **Option 2: Quick Run** — Fast-paced high-yield review focusing on core exam topics, structured **Mind Maps**, cheat-sheet summaries, and key definitions.\n\n` +
+        `*Click an option button above or type \`1\` or \`2\` to begin!*`;
     }
 
-    // 0b. Affirmations
+    // 0d. Affirmations
     if (words.length > 0 && words.every(w => ['thanks', 'thank', 'you', 'thx', 'cool', 'ok', 'okay', 'great', 'awesome', 'got', 'it', 'understood'].includes(w))) {
-      return `You're very welcome! Keep up the great work. Would you like to test your understanding with a practice question or explore another facet of ${lessonTitle || 'this concept'}?`;
+      return `You're very welcome! Keep up the great work. Would you like to test your understanding with a practice question or explore another facet of ${topic}?`;
     }
 
     // 1. Code & Line-by-Line Breakdown Request
@@ -463,9 +503,105 @@ class ApiService {
     return this.generateFallbackQuizQuestions(lessonTitle);
   }
 
-  private generateFallbackQuizQuestions(lessonTitle: string): QuizQuestion[] {
+  public generateFallbackQuizQuestions(lessonTitle: string): QuizQuestion[] {
     const timestamp = Date.now().toString(36).slice(-4);
     const lower = lessonTitle.toLowerCase();
+
+    // OS CPU Scheduling - FCFS
+    if (lower.includes('fcfs') || (lower.includes('first-come') || lower.includes('first come'))) {
+      return [
+        {
+          id: `gen_${timestamp}_fcfs_1`,
+          question: "In First-Come, First-Served (FCFS) scheduling, what is the primary consequence of a CPU-bound process arriving before multiple I/O-bound processes?",
+          options: [
+            "The Convoy Effect, causing significant delays for shorter processes",
+            "Deadlock due to circular wait in the ready queue",
+            "Priority inversion in the scheduler interrupt handler",
+            "Immediate preemption of the running task"
+          ],
+          correct_answer: "The Convoy Effect, causing significant delays for shorter processes",
+          hint: "Think about short jobs getting stuck behind a single massive job.",
+          difficulty: "Easy"
+        },
+        {
+          id: `gen_${timestamp}_fcfs_2`,
+          question: "If processes P1 (Burst 10ms) and P2 (Burst 3ms) arrive at time 0 in that order under FCFS, what is the waiting time of P2?",
+          options: [
+            "10 ms",
+            "3 ms",
+            "13 ms",
+            "0 ms"
+          ],
+          correct_answer: "10 ms",
+          hint: "P1 runs from time 0 to 10ms. P2 must wait until P1 finishes.",
+          difficulty: "Medium"
+        }
+      ];
+    }
+
+    // OS CPU Scheduling - Non-Preemptive SJF
+    if ((lower.includes('sjf') && !lower.includes('srtf') && !lower.includes('preemptive')) || lower.includes('non-preemptive sjf')) {
+      return [
+        {
+          id: `gen_${timestamp}_sjf_1`,
+          question: "Why is Non-Preemptive Shortest Job First (SJF) considered mathematically optimal?",
+          options: [
+            "It minimizes the overall average waiting time across all processes",
+            "It guarantees zero context switching overhead",
+            "It prioritizes processes based on memory allocation size",
+            "It prevents CPU idle cycles completely"
+          ],
+          correct_answer: "It minimizes the overall average waiting time across all processes",
+          hint: "Running the shortest jobs first rapidly clears them from the queue.",
+          difficulty: "Easy"
+        },
+        {
+          id: `gen_${timestamp}_sjf_2`,
+          question: "What is the main obstacle to implementing pure SJF in real general-purpose operating systems?",
+          options: [
+            "The future CPU burst length of a process cannot be known with certainty in advance",
+            "It requires hardware floating-point registers",
+            "It can only manage up to 4 concurrent processes",
+            "It disables timer interrupts"
+          ],
+          correct_answer: "The future CPU burst length of a process cannot be known with certainty in advance",
+          hint: "How can the scheduler know how long a program will calculate before doing I/O?",
+          difficulty: "Medium"
+        }
+      ];
+    }
+
+    // OS CPU Scheduling - Preemptive SJF / SRTF
+    if (lower.includes('srtf') || (lower.includes('sjf') && lower.includes('preemptive')) || lower.includes('remaining time')) {
+      return [
+        {
+          id: `gen_${timestamp}_srtf_1`,
+          question: "When does preemption occur in Shortest Remaining Time First (SRTF) scheduling?",
+          options: [
+            "When a newly arrived process has a burst time strictly less than the remaining time of the current process",
+            "When the process voluntarily yields CPU control to disk I/O",
+            "When the maximum time slice quantum expires",
+            "Only when user sends a kill interrupt signal"
+          ],
+          correct_answer: "When a newly arrived process has a burst time strictly less than the remaining time of the current process",
+          hint: "Preemption is triggered if a newly arrived process can finish faster than the remaining time of the current job.",
+          difficulty: "Medium"
+        },
+        {
+          id: `gen_${timestamp}_srtf_2`,
+          question: "What primary operational trade-off distinguishes Preemptive SJF (SRTF) from Non-Preemptive SJF?",
+          options: [
+            "SRTF yields lower average waiting time but incurs more context switching overhead",
+            "SRTF eliminates starvation completely",
+            "SRTF disables hardware interrupts during execution",
+            "SRTF cannot handle more than one process in the ready queue"
+          ],
+          correct_answer: "SRTF yields lower average waiting time but incurs more context switching overhead",
+          hint: "Frequent switching allows faster response times, but each switch takes CPU cycles.",
+          difficulty: "Hard"
+        }
+      ];
+    }
 
     if (lower.includes('perceptron') || lower.includes('neuron')) {
       return [

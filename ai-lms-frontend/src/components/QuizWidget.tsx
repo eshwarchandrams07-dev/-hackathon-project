@@ -17,6 +17,7 @@ interface QuizWidgetProps {
   lessonTitle: string;
   lessonContent?: string;
   onAskTutor?: (contextPrompt: string) => void;
+  onAnswerSubmit?: (question: QuizQuestion, selectedAnswer: string, isCorrect: boolean) => void;
 }
 
 export const QuizWidget: React.FC<QuizWidgetProps> = ({
@@ -24,6 +25,7 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
   lessonTitle,
   lessonContent,
   onAskTutor,
+  onAnswerSubmit,
 }) => {
   const [activeQuestions, setActiveQuestions] = useState<QuizQuestion[]>(questions);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
@@ -51,6 +53,9 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
   const handleCheckAnswer = (q: QuizQuestion) => {
     const selected = selectedAnswers[q.id];
     if (!selected) return;
+
+    const isCorrect = selected.trim() === q.correct_answer.trim();
+    onAnswerSubmit?.(q, selected, isCorrect);
 
     setCheckedQuestions(prev => {
       const next = { ...prev, [q.id]: true };
@@ -125,16 +130,16 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800/90 bg-[#0f1523]/80 p-5 backdrop-blur-sm shadow-sm">
+    <div className="rounded-2xl border border-[#D9E2EC] bg-white p-5 shadow-sm">
       
       {/* Widget Header with Reset & Regenerate Action */}
-      <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-800/80">
+      <div className="flex items-center justify-between mb-5 pb-3 border-b border-[#D9E2EC]">
         <div className="flex items-center gap-2">
-          <HelpCircle className="h-4 w-4 text-brand-400" />
-          <h3 className="text-sm font-semibold text-white">
+          <HelpCircle className="h-4 w-4 text-[#00A3BF]" />
+          <h3 className="text-sm font-semibold text-[#102A43]">
             Knowledge Check
           </h3>
-          <span className="text-[11px] font-mono text-slate-500">
+          <span className="text-[11px] font-mono text-[#627D98]">
             ({activeQuestions.length} questions)
           </span>
         </div>
@@ -142,10 +147,10 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
         <button
           onClick={handleResetQuiz}
           disabled={isRegenerating}
-          className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-850 transition disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-[#243B53] px-2.5 py-1 rounded-lg bg-[#F0F4F8] border border-[#D9E2EC] hover:border-[#00A3BF]/40 hover:bg-[#E6F8FB] hover:text-[#00A3BF] transition disabled:opacity-50 font-medium"
           title="Reset answers and create fresh questions for this lesson"
         >
-          <RotateCcw className={`h-3 w-3 ${isRegenerating ? 'animate-spin text-brand-400' : ''}`} />
+          <RotateCcw className={`h-3 w-3 ${isRegenerating ? 'animate-spin text-[#00A3BF]' : ''}`} />
           <span>{isRegenerating ? 'Generating Questions...' : 'Reset & New Questions'}</span>
         </button>
       </div>
@@ -165,19 +170,19 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
               key={q.id || idx}
               className={`p-4 rounded-xl border transition-colors ${
                 isCorrect
-                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  ? 'border-emerald-500/40 bg-emerald-50/70'
                   : isIncorrect
-                  ? 'border-rose-500/30 bg-rose-500/5'
-                  : 'border-slate-800/80 bg-slate-950/40'
+                  ? 'border-rose-500/40 bg-rose-50/70'
+                  : 'border-[#D9E2EC] bg-[#F0F4F8]/50 hover:bg-[#F0F4F8]'
               }`}
             >
               {/* Question Header & Difficulty Tag */}
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-start gap-2.5 min-w-0">
-                  <span className="h-5 w-5 rounded-md bg-slate-800 text-slate-400 flex items-center justify-center font-mono text-[10px] shrink-0 mt-0.5">
+                  <span className="h-5 w-5 rounded-md bg-[#102A43]/10 text-[#102A43] flex items-center justify-center font-mono text-[10px] font-bold shrink-0 mt-0.5">
                     {idx + 1}
                   </span>
-                  <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed">
+                  <p className="text-xs sm:text-sm font-semibold text-[#102A43] leading-relaxed">
                     {q.question}
                   </p>
                 </div>
@@ -194,18 +199,18 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
                   const isOptSelected = selected === option;
                   const isTheCorrectOpt = option === q.correct_answer;
 
-                  let optStyles = 'border-slate-800 bg-slate-900/50 text-slate-300 hover:border-slate-700 hover:bg-slate-900';
+                  let optStyles = 'border-[#D9E2EC] bg-white text-[#243B53] hover:border-[#00A3BF]/40 hover:bg-[#F0F4F8] shadow-sm';
                   
                   if (isChecked) {
                     if (isTheCorrectOpt) {
-                      optStyles = 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200 font-medium';
+                      optStyles = 'border-emerald-500 bg-emerald-100/80 text-emerald-900 font-semibold shadow-sm';
                     } else if (isOptSelected && !isTheCorrectOpt) {
-                      optStyles = 'border-rose-500/40 bg-rose-500/10 text-rose-300 line-through';
+                      optStyles = 'border-rose-400 bg-rose-100/80 text-rose-900 line-through';
                     } else {
-                      optStyles = 'border-slate-800/40 opacity-40 bg-slate-950/20 text-slate-500';
+                      optStyles = 'border-[#E2E8F0] opacity-40 bg-[#F8FAFC] text-[#627D98]';
                     }
                   } else if (isOptSelected) {
-                    optStyles = 'border-brand-500 bg-brand-500/15 text-white font-medium';
+                    optStyles = 'border-[#00A3BF] bg-[#E6F8FB] text-[#00A3BF] font-semibold ring-1 ring-[#00A3BF]/40 shadow-sm';
                   }
 
                   return (
@@ -216,7 +221,7 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
                       onClick={() => handleSelectOption(q.id, option)}
                       className={`text-left px-3 py-2 rounded-lg border text-xs leading-snug transition-colors flex items-start gap-2 ${optStyles}`}
                     >
-                      <span className="shrink-0 font-mono text-[10px] text-slate-500 mt-0.5">
+                      <span className={`shrink-0 font-mono text-[10px] mt-0.5 font-bold ${isOptSelected ? 'text-[#00A3BF]' : 'text-[#627D98]'}`}>
                         {String.fromCharCode(65 + optIdx)}.
                       </span>
                       <span className="flex-1">{option}</span>
@@ -233,10 +238,10 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
                       type="button"
                       disabled={!selected}
                       onClick={() => handleCheckAnswer(q)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                         selected
-                          ? 'bg-brand-600 hover:bg-brand-500 text-white shadow-sm'
-                          : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                          ? 'bg-[#00A3BF] hover:bg-[#008CA4] text-white shadow-sm'
+                          : 'bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed'
                       }`}
                     >
                       Submit Answer
@@ -244,13 +249,13 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
                   ) : (
                     <div className="flex items-center gap-1.5 text-xs">
                       {isCorrect ? (
-                        <span className="text-emerald-400 flex items-center gap-1 font-medium">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="text-emerald-700 flex items-center gap-1 font-bold">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                           Correct!
                         </span>
                       ) : (
-                        <span className="text-rose-400 flex items-center gap-1 font-medium">
-                          <XCircle className="h-3.5 w-3.5" />
+                        <span className="text-rose-700 flex items-center gap-1 font-bold">
+                          <XCircle className="h-4 w-4 text-rose-600" />
                           Incorrect
                         </span>
                       )}
@@ -261,9 +266,9 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
                     <button
                       type="button"
                       onClick={() => toggleHint(q.id)}
-                      className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200 px-2 py-1 rounded-md hover:bg-slate-800/60 transition"
+                      className="flex items-center gap-1 text-[11px] text-[#627D98] hover:text-[#102A43] px-2 py-1 rounded-md hover:bg-[#E2E8F0]/60 transition"
                     >
-                      <Lightbulb className="h-3 w-3 text-amber-400" />
+                      <Lightbulb className="h-3 w-3 text-amber-500" />
                       <span>{showHint ? 'Hide Hint' : 'Hint'}</span>
                     </button>
                   )}
@@ -273,9 +278,9 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
                   <button
                     type="button"
                     onClick={() => handleAskTutorForHelp(q)}
-                    className="flex items-center gap-1 text-[11px] text-brand-400 hover:text-brand-300 transition"
+                    className="flex items-center gap-1 text-[11px] text-[#7B61FF] hover:text-[#6348EE] hover:bg-[#F3F0FF] px-2 py-1 rounded-md transition font-medium"
                   >
-                    <MessageSquareQuote className="h-3 w-3" />
+                    <MessageSquareQuote className="h-3.5 w-3.5" />
                     <span>Ask Socratic Tutor</span>
                   </button>
                 )}
@@ -283,8 +288,8 @@ export const QuizWidget: React.FC<QuizWidgetProps> = ({
 
               {/* Revealed Hint */}
               {showHint && q.hint && (
-                <div className="ml-7 mt-2.5 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-amber-300/90 text-xs leading-relaxed">
-                  <span className="font-medium">Hint: </span>
+                <div className="ml-7 mt-2.5 p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-xs leading-relaxed">
+                  <span className="font-bold text-amber-950">Hint: </span>
                   <span>{q.hint}</span>
                 </div>
               )}

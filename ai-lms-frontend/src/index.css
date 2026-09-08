@@ -2,83 +2,102 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-foundation-blue: #102A43;
+  --color-aether-purple: #7B61FF;
+  --color-quantum-teal: #00A3BF;
+  --color-studio-white: #F0F4F8;
+  --color-charcoal-text: #243B53;
+  --color-muted-text: #627D98;
+  --color-border: #D9E2EC;
+  --color-surface: #FFFFFF;
+}
+
 @layer base {
   body {
-    @apply bg-[#0b0f17] text-slate-200 font-sans min-h-screen overflow-x-hidden antialiased selection:bg-brand-500/20 selection:text-brand-200;
-    background-image: 
-      radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.04) 0px, transparent 60%);
-    background-attachment: fixed;
+    @apply bg-[#F0F4F8] text-[#243B53] font-sans min-h-screen overflow-x-hidden antialiased selection:bg-[#00A3BF]/25 selection:text-[#102A43];
+    background-color: #F0F4F8;
   }
 }
 
-/* Minimal Scrollbars */
+/* Minimal Scrollbars styled for Studio White canvas */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #BCCCDC;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #9FB3C8;
+}
+
+/* Utility to hide scrollbar where needed */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Markdown styling within lesson reader */
 .markdown-body {
-  color: #cbd5e1;
+  color: #243B53;
   line-height: 1.75;
 }
 .markdown-body h1 {
-  @apply text-xl sm:text-2xl font-semibold text-white mt-6 mb-3 pb-2 border-b border-slate-800/80 tracking-tight;
+  @apply text-xl sm:text-2xl font-bold text-[#102A43] mt-6 mb-3 pb-2 border-b border-[#D9E2EC] tracking-tight;
 }
 .markdown-body h2 {
-  @apply text-lg sm:text-xl font-semibold text-slate-100 mt-5 mb-2.5 tracking-tight;
+  @apply text-lg sm:text-xl font-bold text-[#102A43] mt-5 mb-2.5 tracking-tight;
 }
 .markdown-body h3 {
-  @apply text-base sm:text-lg font-medium text-brand-300 mt-4 mb-2;
+  @apply text-base sm:text-lg font-semibold text-[#7B61FF] mt-4 mb-2;
 }
 .markdown-body h4 {
-  @apply text-sm sm:text-base font-medium text-slate-200 mt-3 mb-1.5;
+  @apply text-sm sm:text-base font-semibold text-[#00A3BF] mt-3 mb-1.5;
 }
 .markdown-body p {
-  @apply mb-4 text-slate-300 text-sm leading-relaxed;
+  @apply mb-4 text-[#243B53] text-sm leading-relaxed;
 }
 .markdown-body ul {
-  @apply list-disc list-inside mb-4 space-y-1.5 text-slate-300 text-sm pl-1;
+  @apply list-disc list-inside mb-4 space-y-1.5 text-[#243B53] text-sm pl-1;
 }
 .markdown-body ol {
-  @apply list-decimal list-inside mb-4 space-y-1.5 text-slate-300 text-sm pl-1;
+  @apply list-decimal list-inside mb-4 space-y-1.5 text-[#243B53] text-sm pl-1;
 }
 .markdown-body code {
-  @apply bg-slate-800/70 text-brand-300 px-1.5 py-0.5 rounded text-xs font-mono border border-slate-700/40;
+  @apply bg-[#E6F8FB] text-[#00A3BF] px-1.5 py-0.5 rounded text-xs font-mono border border-[#00A3BF]/30 font-medium;
 }
 .markdown-body pre {
-  @apply bg-slate-900/90 text-slate-200 p-4 rounded-xl overflow-x-auto mb-4 border border-slate-800/80 font-mono text-xs leading-relaxed;
+  @apply bg-[#102A43] text-[#F0F4F8] p-4 rounded-xl overflow-x-auto mb-4 border border-[#102A43]/40 font-mono text-xs leading-relaxed shadow-sm;
 }
 .markdown-body pre code {
-  @apply bg-transparent p-0 border-0 text-slate-200;
+  @apply bg-transparent p-0 border-0 text-[#F0F4F8];
 }
 .markdown-body blockquote {
-  @apply border-l-2 border-brand-500/80 pl-3.5 py-1.5 my-3 bg-brand-500/5 rounded-r-lg text-slate-300 text-xs italic;
+  @apply border-l-4 border-[#7B61FF] pl-3.5 py-2 my-3 bg-[#7B61FF]/10 rounded-r-lg text-[#243B53] text-xs italic;
 }
 .markdown-body strong {
-  @apply text-white font-medium;
+  @apply text-[#102A43] font-bold;
 }
 
-/* Minimal Card and Container Utilities */
+/* Card and Container Utilities */
 .card-minimal {
-  background: #0f1523;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #FFFFFF;
+  border: 1px solid #D9E2EC;
 }
 
 .card-minimal-hover {
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .card-minimal-hover:hover {
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: #00A3BF;
+  box-shadow: 0 4px 12px rgba(0, 163, 191, 0.08);
   transform: translateY(-1px);
 }

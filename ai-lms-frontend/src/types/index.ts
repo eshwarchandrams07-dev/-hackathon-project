@@ -91,3 +91,87 @@ export interface UploadHistoryItem {
 }
 
 export type ViewTab = 'dashboard' | 'course' | 'split-tutor';
+
+export type NavTab = 'dashboard' | 'courses' | 'study' | 'analytics' | 'settings';
+
+export interface SubjectMaterial {
+  id: string;
+  subjectId: string;
+  fileName: string;
+  fileSize?: number;
+  uploadedAt: number;
+  taskId?: string;
+  course?: Course;
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  code?: string;
+  color?: 'blue' | 'emerald' | 'purple' | 'amber' | 'indigo' | 'rose' | string;
+  description?: string;
+  icon?: string;
+  progressPercent?: number;
+  openedLessonIds?: string[];
+  assessmentScore?: number;
+  materials: SubjectMaterial[];
+  createdAt: number;
+}
+
+export interface SubjectLessonStats {
+  totalLessons: number;
+  openedLessonsCount: number;
+  slideProgressPercent: number;
+  assessmentScore: number;
+  progressPercent: number;
+  openedLessonIds: string[];
+}
+
+export interface QuizAttempt {
+  id: string;
+  subjectId?: string;
+  courseTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+  questionId: string;
+  questionText: string;
+  selectedAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  topicOrConcept?: string;
+  difficulty?: string;
+  timestamp: number;
+}
+
+export interface SubjectSkillAnalysis {
+  subjectId: string;
+  subjectName: string;
+  totalAttempts: number;
+  correctCount: number;
+  accuracyRate: number;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+}
+
+export interface SmartAssessment {
+  id: string;
+  title: string;
+  subjectKey: string;
+  subjectName: string;
+  topic: string;
+  dueDateLabel: string;
+  dueToday?: boolean;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  questions: QuizQuestion[];
+}
+
+export interface UpcomingExam {
+  id: string;
+  subjectId: string;
+  subjectName: string;
+  subjectCode?: string;
+  examDate: string; // 'YYYY-MM-DD'
+  examTitle?: string; // e.g. "Midterm", "End-Sem Finals"
+  createdAt: number;
+}
