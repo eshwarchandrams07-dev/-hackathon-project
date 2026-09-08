@@ -28,15 +28,24 @@ from app.database import (
     clear_chat_messages
 )
 
+def safe_print(msg: str):
+    try:
+        print(msg)
+    except Exception:
+        try:
+            print(str(msg).encode('ascii', 'replace').decode('ascii'))
+        except Exception:
+            pass
+
 app = FastAPI(title="MindForge AI LMS API")
 
 @app.on_event("startup")
 def on_startup():
     try:
         init_db()
-        print("MindForge SQLite Database initialized successfully.")
+        safe_print("MindForge SQLite Database initialized successfully.")
     except Exception as e:
-        print(f"Warning: Database initialization error: {e}")
+        safe_print(f"Warning: Database initialization error: {e}")
 
 # This allows your frontend code to talk to your backend without security blocks
 app.add_middleware(
@@ -50,6 +59,11 @@ app.add_middleware(
 # Temporary memory storage for the hackathon
 document_store: Dict[str, str] = {}
 course_store: Dict[str, Course] = {}
+
+@app.get("/api/health")
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "MindForge AI LMS API"}
 
 @app.post("/api/upload", response_model=UploadResponse)
 async def upload_document(file: UploadFile = File(...)):
@@ -92,7 +106,7 @@ async def upload_document(file: UploadFile = File(...)):
     try:
         process_pdf(file_path)
     except Exception as e:
-        print(f"Warning: ChromaDB RAG processing encountered: {e}")
+        safe_print(f"Warning: ChromaDB RAG processing encountered: {e}")
 
     task_id = str(uuid.uuid4())
     # Save the actual extracted text so LLM generates a curriculum from the real content
@@ -131,7 +145,7 @@ async def generate_course(payload: GenerateCourseRequest):
     try:
         course = generate_course_from_text(text)
     except Exception as e:
-        print(f"LLM course generation error: {e}")
+        safe_print(f"LLM course generation error: {e}")
         # Try Socratic fallback if Groq API fails
         raise HTTPException(status_code=500, detail=f"Course generation failed: {str(e)}")
 
@@ -154,7 +168,7 @@ async def chat(payload: ChatRequest):
             lesson_id=lesson_id
         )
     except Exception as db_err:
-        print(f"Warning: Failed to save user message to DB: {db_err}")
+        safe_print(f"Warning: Failed to save user message to DB: {db_err}")
 
     # 2. Generate Socratic AI response
     citations = None
@@ -163,7 +177,7 @@ async def chat(payload: ChatRequest):
         reply_text = tutor_result.get("answer", "")
         citations = tutor_result.get("citations", None)
     except Exception as e:
-        print(f"RAG tutor error, using Groq LLM fallback: {e}")
+        safe_print(f"RAG tutor error, using Groq LLM fallback: {e}")
         try:
             reply_text = get_socratic_response(payload.lesson_context, payload.user_message)
         except Exception as e2:
@@ -184,7 +198,7 @@ async def chat(payload: ChatRequest):
         msg_id = saved.get("id")
         ts = saved.get("timestamp")
     except Exception as db_err:
-        print(f"Warning: Failed to save tutor reply to DB: {db_err}")
+        safe_print(f"Warning: Failed to save tutor reply to DB: {db_err}")
 
     return ChatResponse(
         reply=reply_text,
@@ -207,7 +221,7 @@ def get_history(
             count=len(messages)
         )
     except Exception as e:
-        print(f"Error fetching chat history: {e}")
+        safe_print(f"Error fetching chat history: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to retrieve chat history: {str(e)}")
 
 @app.post("/api/chat/save", response_model=ChatMessageSchema)
@@ -225,7 +239,7 @@ def save_chat_message_endpoint(payload: SaveChatMessageRequest):
         )
         return ChatMessageSchema(**saved)
     except Exception as e:
-        print(f"Error saving chat message: {e}")
+        safe_print(f"Error saving chat message: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to save message: {str(e)}")
 
 @app.delete("/api/chat/history")
@@ -242,7 +256,7 @@ def clear_history(
             "deleted_count": deleted_count
         }
     except Exception as e:
-        print(f"Error clearing chat history: {e}")
+        safe_print(f"Error clearing chat history: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clear chat history: {str(e)}")
 
 
@@ -257,5 +271,5 @@ async def regenerate_quiz(payload: RegenerateQuizRequest):
         )
         return questions
     except Exception as e:
-        print(f"Quiz regeneration error: {e}")
+        safe_print(f"Quiz regeneration error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to generate quiz: {str(e)}")
