@@ -391,6 +391,7 @@ export const App: React.FC = () => {
           {/* View 3: Subject Study View (PDF Reader + Embedded Quiz + Embedded Socratic Tutor) */}
           {currentTab === 'study' && activeCourse && activeSubject && activeMaterial && (
             <SubjectStudyView
+              key={`${activeSubject.id}_${activeMaterial.id}`}
               subject={activeSubject}
               material={activeMaterial}
               course={activeCourse}

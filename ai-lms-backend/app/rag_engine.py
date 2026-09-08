@@ -96,14 +96,20 @@ Student Question: {user_query}
     citations = list(set([c["page"] for c in context_data if "page" in c]))
     try:
         client = get_gemini_client()
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt
-        )
-        return {
-            "answer": response.text,
-            "citations": citations
-        }
+        for g_model in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash"]:
+            try:
+                response = client.models.generate_content(
+                    model=g_model,
+                    contents=prompt
+                )
+                if response.text:
+                    return {
+                        "answer": response.text,
+                        "citations": citations
+                    }
+            except Exception:
+                continue
+        raise RuntimeError("All Gemini models failed in RAG tutor")
     except Exception as e:
         print(f"[Notice] Gemini tutor API unavailable ({e}). Using intelligent Socratic engine.")
         from app.socratic_engine import generate_intelligent_socratic_reply
@@ -127,11 +133,17 @@ Course Context:
 """
     try:
         client = get_gemini_client()
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt
-        )
-        return response.text
+        for g_model in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash"]:
+            try:
+                response = client.models.generate_content(
+                    model=g_model,
+                    contents=prompt
+                )
+                if response.text:
+                    return response.text
+            except Exception:
+                continue
+        raise RuntimeError("All Gemini models failed in outline generation")
     except Exception as e:
         return f"# 4-Week Module Outline for {topic}\n\n- **Week 1: Core Foundations & Terminology**\n- **Week 2: Architectural Patterns & Syntax**\n- **Week 3: Practical Implementation & Error Handling**\n- **Week 4: Advanced Optimizations & Review**"
 
@@ -148,11 +160,17 @@ Course Context:
 """
     try:
         client = get_gemini_client()
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt
-        )
-        return response.text
+        for g_model in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash"]:
+            try:
+                response = client.models.generate_content(
+                    model=g_model,
+                    contents=prompt
+                )
+                if response.text:
+                    return response.text
+            except Exception:
+                continue
+        raise RuntimeError("All Gemini models failed in quiz generation")
     except Exception as e:
         return f"Assessment Quiz for {topic}: Review the core principles and test edge cases."
 

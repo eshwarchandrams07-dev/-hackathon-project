@@ -518,7 +518,8 @@ def generate_course_from_text(raw_text: str) -> Course:
     # Tier 1: Try Google Gemini API if a valid key is provided
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     if gemini_key and not gemini_key.startswith("placeholder") and not gemini_key.startswith("your_") and len(gemini_key) > 10:
-        for g_model in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+        active_models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.8-flash", "gemini-3.6-flash"]
+        for g_model in active_models:
             try:
                 from google import genai
                 g_client = genai.Client(api_key=gemini_key)
@@ -588,7 +589,8 @@ def generate_quiz_for_lesson(lesson_title: str, lesson_content: str, num_questio
     # Tier 1: Try Gemini API
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     if gemini_key and not gemini_key.startswith("placeholder") and not gemini_key.startswith("your_") and len(gemini_key) > 10:
-        for g_model in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+        active_models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.8-flash", "gemini-3.6-flash"]
+        for g_model in active_models:
             try:
                 from google import genai
                 g_client = genai.Client(api_key=gemini_key)
@@ -675,7 +677,8 @@ def get_socratic_response(context: str, user_message: str) -> str:
     # 1. Try Gemini API first
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     if gemini_key and not gemini_key.startswith("placeholder") and not gemini_key.startswith("your_") and len(gemini_key) > 10:
-        for g_model in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+        active_models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.8-flash", "gemini-3.6-flash"]
+        for g_model in active_models:
             try:
                 from google import genai
                 g_client = genai.Client(api_key=gemini_key)

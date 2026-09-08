@@ -85,6 +85,15 @@ export const SubjectStudyView: React.FC<SubjectStudyViewProps> = ({
   });
   const [isThinking, setIsThinking] = useState(false);
 
+  useEffect(() => {
+    const saved = apiService.loadLocalChatHistory(sessionId);
+    if (saved && saved.length > 0) {
+      setChatMessages(saved);
+    } else {
+      setChatMessages([getInitialWelcome(subject.name, material.fileName)]);
+    }
+  }, [sessionId, subject.name, material.fileName]);
+
   const currentModule = course.modules.find(m => m.module_id === activeModuleId) || course.modules[0];
   const currentLesson = currentModule?.lessons.find(l => l.lesson_id === activeLessonId) || currentModule?.lessons[0];
 

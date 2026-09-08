@@ -10,6 +10,9 @@ Supports multi-tier architecture:
 import os
 import re
 from typing import Dict, List, Optional
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 def _clean_markdown(text: str) -> str:
     return text.replace("\r\n", "\n").strip()
@@ -628,9 +631,27 @@ def ask_socratic_tutor_unified(
     active_gemini_key = api_key if (api_key and (api_key.startswith("AIza") or api_key.startswith("AQ."))) else os.getenv("GEMINI_API_KEY", "").strip()
     active_groq_key = api_key if (api_key and api_key.startswith("gsk_")) else os.getenv("GROQ_API_KEY", "").strip()
 
-    # Tier 1: Try Gemini API
+    # Tier 1: Try Gemini API with reliable, active models
     if active_gemini_key and not active_gemini_key.startswith("your_") and not active_gemini_key.startswith("placeholder") and len(active_gemini_key) > 10:
-        for g_model in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+        history_context = ""
+        if history and len(history) > 0:
+            history_snippets = []
+            for h in history[-6:]:
+                role_name = "Student" if h.get("role") == "user" else "Tutor"
+                content_snip = str(h.get("content", "")).strip()
+                if content_snip:
+                    history_snippets.append(f"{role_name}: {content_snip}")
+            if history_snippets:
+                history_context = "\nRecent Conversation History:\n" + "\n".join(history_snippets) + "\n"
+
+        active_models = [
+            "gemini-3.5-flash-lite",
+            "gemini-3.5-flash",
+            "gemini-3.7-flash",
+            "gemini-3.8-flash",
+            "gemini-3.6-flash"
+        ]
+        for g_model in active_models:
             try:
                 from google import genai
                 client = genai.Client(api_key=active_gemini_key)
@@ -646,7 +667,8 @@ def ask_socratic_tutor_unified(
                     f"If the student asks for a code explanation or line-by-line breakdown, provide a clear, comprehensive line-by-line breakdown with syntax formatting.\n"
                     f"If the student asks for an analogy, provide an engaging real-world comparison.\n"
                     f"Conclude with 1 engaging Socratic question that tests their critical thinking.\n\n"
-                    f"Lesson Context:\n{lesson_context}\n\n"
+                    f"Lesson Context:\n{lesson_context}\n"
+                    f"{history_context}\n"
                     f"Student Inquiry: {user_query}"
                 )
                 res = client.models.generate_content(

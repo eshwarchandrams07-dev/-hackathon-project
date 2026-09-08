@@ -2,8 +2,12 @@ import os
 import uuid
 import pymupdf
 from typing import Dict, List, Optional
+from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+
+# Load .env variables
+load_dotenv(override=True)
 from app.schemas import (
     UploadResponse, 
     GenerateCourseRequest, 
