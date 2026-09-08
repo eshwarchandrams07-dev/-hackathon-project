@@ -5,13 +5,9 @@ import {
   BookOpen, 
   Columns, 
   Layers, 
-  Sparkles, 
-  Cpu, 
-  ArrowRight, 
-  FileText, 
-  MessageSquare,
-  ShieldCheck,
-  Zap
+  CheckCircle2,
+  ArrowRight,
+  GraduationCap
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -29,10 +25,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToSplitTutor,
   isBackendOnline,
 }) => {
+  const totalLessons = activeCourse 
+    ? activeCourse.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)
+    : 0;
+
+  const totalConcepts = activeCourse
+    ? activeCourse.modules.reduce((acc, m) => acc + (m.concept_nodes?.length || 0), 0)
+    : 0;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-8">
       
-      {/* Hero Ingestion Hub */}
+      {/* Upload & Ingestion Section */}
       <section>
         <UploadZone
           onCourseGenerated={onCourseGenerated}
@@ -42,94 +46,113 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Active Course Card (if available) */}
       {activeCourse && (
-        <section className="relative overflow-hidden rounded-3xl border border-brand-500/30 bg-gradient-to-r from-slate-900 via-slate-900/90 to-brand-950/40 p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Ready to Learn • Active Curriculum</span>
+        <section className="rounded-2xl border border-slate-800/90 bg-[#0f1523]/90 p-6 backdrop-blur-sm shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+            
+            <div className="space-y-2 max-w-xl">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
+                <CheckCircle2 className="h-3 w-3" />
+                <span>Active Curriculum Ready</span>
               </div>
-              <h3 className="text-2xl font-bold text-white tracking-tight">
+              <h3 className="text-lg font-semibold text-white tracking-tight">
                 {activeCourse.course_title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed line-clamp-2">
+              <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
                 {activeCourse.overview}
               </p>
-              <div className="flex items-center gap-3 pt-1 text-xs text-slate-300 font-mono">
-                <span className="px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700/60">
-                  {activeCourse.modules.length} Modules
-                </span>
-                <span className="px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700/60">
-                  {activeCourse.modules.reduce((acc, m) => acc + m.lessons.length, 0)} Lessons
-                </span>
+              
+              <div className="flex items-center gap-3 pt-1 text-[11px] font-mono text-slate-400">
+                <span>{activeCourse.modules.length} Modules</span>
+                <span>•</span>
+                <span>{totalLessons} Lessons</span>
+                <span>•</span>
+                <span>{totalConcepts} Concepts Extracted</span>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            {/* Quick Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
               <button
                 onClick={onNavigateToCourse}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-100 text-xs sm:text-sm font-semibold transition"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium transition"
               >
-                <BookOpen className="h-4 w-4 text-brand-400" />
-                <span>Explore Course</span>
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Curriculum Outline</span>
               </button>
 
               <button
                 onClick={onNavigateToSplitTutor}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-accent-violet hover:from-brand-500 hover:to-accent-violet text-white text-xs sm:text-sm font-semibold shadow-lg shadow-brand-600/30 transition active:scale-95"
+                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition shadow-sm"
               >
-                <Columns className="h-4 w-4 text-accent-cyan" />
-                <span>Open Split-Screen Tutor</span>
-                <ArrowRight className="h-4 w-4" />
+                <Columns className="h-3.5 w-3.5" />
+                <span>Open Socratic Workspace</span>
+                <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
+
           </div>
         </section>
       )}
 
-      {/* Architectural Pillars / Pipeline Highlights */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-md">
-          <div className="h-10 w-10 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center mb-4">
-            <FileText className="h-5 w-5" />
+      {/* Structured Modules Overview */}
+      {activeCourse && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Course Structure
+            </h4>
+            <span className="text-[11px] text-slate-500">
+              {activeCourse.modules.length} modules available
+            </span>
           </div>
-          <h4 className="text-base font-semibold text-white mb-2">FastAPI PDF Ingestion</h4>
-          <p className="text-xs text-slate-400 leading-relaxed mb-3">
-            Directly uploads source PDF documents to <code className="text-brand-300 font-mono">/api/upload</code>, extracting full text and chunking with PyMuPDF into ChromaDB.
-          </p>
-          <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700/60">
-            POST /api/upload
-          </span>
-        </div>
 
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-md">
-          <div className="h-10 w-10 rounded-xl bg-accent-cyan/10 border border-accent-cyan/20 text-accent-cyan flex items-center justify-center mb-4">
-            <Cpu className="h-5 w-5" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {activeCourse.modules.map((module, idx) => (
+              <div
+                key={module.module_id}
+                onClick={onNavigateToCourse}
+                className="rounded-xl border border-slate-800/80 bg-[#0f1523]/60 hover:bg-slate-900/80 hover:border-slate-700/80 p-4 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center justify-center h-5 w-5 rounded-md bg-slate-800 text-slate-400 font-mono text-[10px]">
+                      {idx + 1}
+                    </span>
+                    <h5 className="text-xs font-medium text-white group-hover:text-brand-300 transition-colors">
+                      {module.title}
+                    </h5>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                    {module.lessons.length} {module.lessons.length === 1 ? 'lesson' : 'lessons'}
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed pl-7">
+                  {module.description}
+                </p>
+
+                {module.concept_nodes && module.concept_nodes.length > 0 && (
+                  <div className="mt-3 pl-7 flex flex-wrap gap-1">
+                    {module.concept_nodes.slice(0, 3).map((concept) => (
+                      <span 
+                        key={concept.node_id}
+                        className="px-1.5 py-0.5 rounded bg-slate-800/80 border border-slate-700/40 text-[10px] text-slate-400"
+                      >
+                        {concept.label}
+                      </span>
+                    ))}
+                    {module.concept_nodes.length > 3 && (
+                      <span className="text-[10px] text-slate-500 self-center">
+                        +{module.concept_nodes.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <h4 className="text-base font-semibold text-white mb-2">Modular Curriculum Engine</h4>
-          <p className="text-xs text-slate-400 leading-relaxed mb-3">
-            Converts vector store knowledge into structured modules, lessons, concept dependencies, and multiple-choice quizzes with hints via <code className="text-accent-cyan font-mono">/api/generate-course</code>.
-          </p>
-          <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700/60">
-            POST /api/generate-course
-          </span>
-        </div>
-
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-md">
-          <div className="h-10 w-10 rounded-xl bg-accent-violet/10 border border-accent-violet/20 text-accent-violet flex items-center justify-center mb-4">
-            <MessageSquare className="h-5 w-5" />
-          </div>
-          <h4 className="text-base font-semibold text-white mb-2">Split-Screen Socratic Tutor</h4>
-          <p className="text-xs text-slate-400 leading-relaxed mb-3">
-            Interactive dual-pane workspace that injects active lesson context into <code className="text-accent-violet font-mono">/api/chat</code> to guide students without giving away direct answers.
-          </p>
-          <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700/60">
-            POST /api/chat
-          </span>
-        </div>
-
-      </section>
+        </section>
+      )}
 
     </div>
   );

@@ -4,22 +4,20 @@
 
 @layer base {
   body {
-    @apply bg-[#090d16] text-slate-200 font-sans min-h-screen overflow-x-hidden;
+    @apply bg-[#0b0f17] text-slate-200 font-sans min-h-screen overflow-x-hidden antialiased selection:bg-brand-500/20 selection:text-brand-200;
     background-image: 
-      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.06) 0px, transparent 50%),
-      radial-gradient(at 50% 50%, rgba(139, 92, 246, 0.04) 0px, transparent 60%);
+      radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.04) 0px, transparent 60%);
     background-attachment: fixed;
   }
 }
 
-/* Custom Scrollbars */
+/* Minimal Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
@@ -35,51 +33,52 @@
   line-height: 1.75;
 }
 .markdown-body h1 {
-  @apply text-2xl font-bold text-white mt-6 mb-3 pb-2 border-b border-slate-800;
+  @apply text-xl sm:text-2xl font-semibold text-white mt-6 mb-3 pb-2 border-b border-slate-800/80 tracking-tight;
 }
 .markdown-body h2 {
-  @apply text-xl font-semibold text-slate-100 mt-5 mb-2.5;
+  @apply text-lg sm:text-xl font-semibold text-slate-100 mt-5 mb-2.5 tracking-tight;
 }
 .markdown-body h3 {
-  @apply text-lg font-medium text-brand-300 mt-4 mb-2;
+  @apply text-base sm:text-lg font-medium text-brand-300 mt-4 mb-2;
+}
+.markdown-body h4 {
+  @apply text-sm sm:text-base font-medium text-slate-200 mt-3 mb-1.5;
 }
 .markdown-body p {
-  @apply mb-4 text-slate-300 text-[15px];
+  @apply mb-4 text-slate-300 text-sm leading-relaxed;
 }
 .markdown-body ul {
-  @apply list-disc list-inside mb-4 space-y-1.5 text-slate-300 text-[15px];
+  @apply list-disc list-inside mb-4 space-y-1.5 text-slate-300 text-sm pl-1;
 }
 .markdown-body ol {
-  @apply list-decimal list-inside mb-4 space-y-1.5 text-slate-300 text-[15px];
+  @apply list-decimal list-inside mb-4 space-y-1.5 text-slate-300 text-sm pl-1;
 }
 .markdown-body code {
-  @apply bg-slate-800/80 text-brand-300 px-1.5 py-0.5 rounded text-sm font-mono border border-slate-700/50;
+  @apply bg-slate-800/70 text-brand-300 px-1.5 py-0.5 rounded text-xs font-mono border border-slate-700/40;
 }
 .markdown-body pre {
-  @apply bg-slate-900/90 text-slate-200 p-4 rounded-xl overflow-x-auto mb-4 border border-slate-800 font-mono text-sm shadow-inner;
+  @apply bg-slate-900/90 text-slate-200 p-4 rounded-xl overflow-x-auto mb-4 border border-slate-800/80 font-mono text-xs leading-relaxed;
 }
 .markdown-body pre code {
   @apply bg-transparent p-0 border-0 text-slate-200;
 }
 .markdown-body blockquote {
-  @apply border-l-4 border-brand-500 pl-4 py-1.5 my-4 bg-brand-500/5 rounded-r-lg text-slate-300 italic;
+  @apply border-l-2 border-brand-500/80 pl-3.5 py-1.5 my-3 bg-brand-500/5 rounded-r-lg text-slate-300 text-xs italic;
 }
 .markdown-body strong {
-  @apply text-white font-semibold;
+  @apply text-white font-medium;
 }
 
-/* Glassmorphism helpers */
-.glass-card {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
+/* Minimal Card and Container Utilities */
+.card-minimal {
+  background: #0f1523;
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.glass-card-hover {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.card-minimal-hover {
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
-.glass-card-hover:hover {
-  border-color: rgba(99, 102, 241, 0.35);
-  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.15);
+.card-minimal-hover:hover {
+  border-color: rgba(99, 102, 241, 0.3);
   transform: translateY(-1px);
 }

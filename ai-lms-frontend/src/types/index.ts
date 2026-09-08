@@ -10,6 +10,7 @@ export interface QuizQuestion {
   options: string[];
   correct_answer: string;
   hint: string;
+  difficulty?: 'Easy' | 'Medium' | 'Hard' | string;
 }
 
 export interface Lesson {
@@ -50,6 +51,8 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   citations?: number[];
+  lessonId?: string;
+  sessionId?: string;
 }
 
 export interface ChatRequest {
@@ -59,10 +62,17 @@ export interface ChatRequest {
     role: string;
     content: string;
   }>;
+  session_id?: string;
+  lesson_id?: string;
+  user_id?: string;
 }
 
 export interface ChatResponse {
   reply: string;
+  message_id?: string;
+  timestamp?: number;
+  citations?: number[];
 }
+
 
 export type ViewTab = 'dashboard' | 'course' | 'split-tutor';

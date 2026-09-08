@@ -7,22 +7,21 @@ import {
   BookOpen, 
   ChevronRight, 
   CheckCircle2, 
-  Sparkles, 
   Key, 
   ArrowLeft, 
   ArrowRight, 
-  Columns, 
   Layers,
-  GraduationCap,
-  Clock
+  Sparkles,
+  Compass,
+  Play
 } from 'lucide-react';
 
 interface CourseViewProps {
   course: Course;
   activeModuleId: string;
   activeLessonId: string;
+  isOverviewActive: boolean;
   onSelectLesson: (moduleId: string, lessonId: string) => void;
-  onOpenSplitTutor: () => void;
   onAskTutor: (prompt: string) => void;
 }
 
@@ -30,22 +29,22 @@ export const CourseView: React.FC<CourseViewProps> = ({
   course,
   activeModuleId,
   activeLessonId,
+  isOverviewActive,
   onSelectLesson,
-  onOpenSplitTutor,
   onAskTutor,
 }) => {
   const currentModule = course.modules.find(m => m.module_id === activeModuleId) || course.modules[0];
   const currentLesson = currentModule?.lessons.find(l => l.lesson_id === activeLessonId) || currentModule?.lessons[0];
 
-  // Calculate totals
   const totalLessons = course.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
   const totalConcepts = course.modules.reduce((acc, m) => acc + (m.concept_nodes?.length || 0), 0);
+  const totalQuizzes = course.modules.reduce((acc, m) => acc + m.lessons.reduce((lAcc, l) => lAcc + (l.quiz?.length || 0), 0), 0);
 
-  // Find next/prev lesson for smooth forward/backward paging
-  const allLessonsFlat: Array<{ moduleId: string; lesson: Lesson }> = [];
+  // Flatten lessons for previous / next pagination
+  const allLessonsFlat: Array<{ moduleId: string; moduleTitle: string; lesson: Lesson }> = [];
   course.modules.forEach(m => {
     m.lessons.forEach(l => {
-      allLessonsFlat.push({ moduleId: m.module_id, lesson: l });
+      allLessonsFlat.push({ moduleId: m.module_id, moduleTitle: m.title, lesson: l });
     });
   });
 
@@ -55,211 +54,215 @@ export const CourseView: React.FC<CourseViewProps> = ({
   const prevLesson = currentIndex > 0 ? allLessonsFlat[currentIndex - 1] : null;
   const nextLesson = currentIndex < allLessonsFlat.length - 1 ? allLessonsFlat[currentIndex + 1] : null;
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      
-      {/* Course Banner Header */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900/90 to-brand-950/40 p-6 sm:p-8 backdrop-blur-xl shadow-xl">
-        <div className="absolute right-0 top-0 h-48 w-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+  // View Mode 1: Course Syllabus Overview
+  if (isOverviewActive) {
+    const firstLesson = allLessonsFlat[0];
+
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8 space-y-8 animate-fade-in">
         
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold">
-              <GraduationCap className="h-3.5 w-3.5" />
-              <span>Interactive Modular Course</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              {course.course_title}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              {course.overview}
-            </p>
+        {/* Course Banner */}
+        <div className="rounded-2xl border border-slate-800/90 bg-[#0f1523]/90 p-6 sm:p-8 backdrop-blur-sm shadow-sm space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-md bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs font-mono">
+              Curriculum Overview
+            </span>
           </div>
 
-          {/* Quick Stats & Action */}
-          <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-3 shrink-0">
-            <div className="flex items-center gap-3 text-xs text-slate-300">
-              <span className="px-3 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 font-mono">
-                {course.modules.length} Modules
-              </span>
-              <span className="px-3 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 font-mono">
-                {totalLessons} Lessons
-              </span>
-              <span className="px-3 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 font-mono text-accent-cyan">
-                {totalConcepts} Concepts
-              </span>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            {course.course_title}
+          </h1>
+
+          <p className="text-sm text-slate-300 leading-relaxed max-w-3xl">
+            {course.overview}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
+              <span>{course.modules.length} Modules</span>
+              <span>•</span>
+              <span>{totalLessons} Lessons</span>
+              <span>•</span>
+              <span>{totalConcepts} Concepts</span>
+              <span>•</span>
+              <span>{totalQuizzes} Practice Questions</span>
             </div>
 
-            <button
-              onClick={onOpenSplitTutor}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-accent-violet hover:from-brand-500 hover:to-accent-violet text-white text-xs sm:text-sm font-semibold shadow-lg shadow-brand-600/20 hover:shadow-brand-600/30 transition active:scale-95"
-            >
-              <Columns className="h-4 w-4 text-accent-cyan" />
-              <span>Open Split-Screen Tutor</span>
-            </button>
+            {firstLesson && (
+              <button
+                onClick={() => onSelectLesson(firstLesson.moduleId, firstLesson.lesson.lesson_id)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition shadow-sm"
+              >
+                <Play className="h-3.5 w-3.5 fill-current" />
+                <span>Start Learning</span>
+              </button>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Main Grid: Sidebar Navigator + Lesson Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Left Sidebar: Module & Lesson Tree */}
-        <aside className="lg:col-span-4 space-y-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 backdrop-blur-md p-4 sticky top-20">
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
-              <h3 className="font-semibold text-sm text-white flex items-center gap-2">
-                <Layers className="h-4 w-4 text-brand-400" />
-                <span>Curriculum Modules</span>
-              </h3>
-              <span className="text-[11px] font-mono text-slate-400">
-                {allLessonsFlat.length > 0 ? `${currentIndex + 1} of ${allLessonsFlat.length}` : ''}
-              </span>
-            </div>
+        {/* Modules Breakdown */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Syllabus Modules & Topics
+          </h3>
 
-            <div className="space-y-3">
-              {course.modules.map((mod, modIdx) => {
-                const isModActive = mod.module_id === activeModuleId;
+          <div className="grid grid-cols-1 gap-3">
+            {course.modules.map((mod, modIdx) => (
+              <div
+                key={mod.module_id}
+                className="rounded-xl border border-slate-800/80 bg-[#0f1523]/60 p-5 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="h-5 w-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center font-mono text-[10px]">
+                        {modIdx + 1}
+                      </span>
+                      <h4 className="text-sm font-semibold text-white">
+                        {mod.title}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed pl-7">
+                      {mod.description}
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-500 shrink-0">
+                    {mod.lessons.length} {mod.lessons.length === 1 ? 'lesson' : 'lessons'}
+                  </span>
+                </div>
 
-                return (
-                  <div key={mod.module_id} className="rounded-xl border border-slate-800/80 overflow-hidden bg-slate-950/40">
-                    <div className="px-3.5 py-2.5 bg-slate-900/80 border-b border-slate-800/60 flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="h-5 w-5 rounded-md bg-slate-800 text-slate-300 flex items-center justify-center font-mono text-[10px] font-bold shrink-0">
-                          {modIdx + 1}
+                {/* Lessons in this module */}
+                <div className="pl-7 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-800/60">
+                  {mod.lessons.map((les, lesIdx) => (
+                    <button
+                      key={les.lesson_id}
+                      onClick={() => onSelectLesson(mod.module_id, les.lesson_id)}
+                      className="p-2.5 rounded-lg bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/70 hover:border-slate-700 text-left transition flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-2 truncate pr-2">
+                        <span className="text-[10px] font-mono text-slate-500 group-hover:text-brand-300">
+                          {modIdx + 1}.{lesIdx + 1}
                         </span>
-                        <span className="text-xs font-semibold text-slate-200 truncate" title={mod.title}>
-                          {mod.title}
+                        <span className="text-xs text-slate-300 group-hover:text-white truncate">
+                          {les.title}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-500 font-mono shrink-0">
-                        {mod.lessons.length} {mod.lessons.length === 1 ? 'lesson' : 'lessons'}
-                      </span>
-                    </div>
-
-                    <div className="p-1.5 space-y-1">
-                      {mod.lessons.map((les, lesIdx) => {
-                        const isLesActive = mod.module_id === activeModuleId && les.lesson_id === activeLessonId;
-
-                        return (
-                          <button
-                            key={les.lesson_id}
-                            onClick={() => onSelectLesson(mod.module_id, les.lesson_id)}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-xs transition flex items-center justify-between gap-2 ${
-                              isLesActive
-                                ? 'bg-brand-600 text-white font-medium shadow-sm shadow-brand-500/20'
-                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <span className="opacity-70 font-mono text-[10px]">{modIdx + 1}.{lesIdx + 1}</span>
-                              <span className="truncate">{les.title}</span>
-                            </div>
-                            <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-transform ${isLesActive ? 'translate-x-0.5 text-white' : 'opacity-40'}`} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-slate-300 shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        </aside>
+        </div>
 
-        {/* Right Main Panel: Active Lesson Content */}
-        <main className="lg:col-span-8 space-y-6">
-          {currentLesson ? (
-            <div className="space-y-6">
-              
-              {/* Lesson Overview Card */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-md">
-                <div className="flex items-center gap-2 text-xs font-medium text-brand-400 mb-2">
-                  <BookOpen className="h-4 w-4" />
-                  <span>Module: {currentModule.title}</span>
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-3">
-                  {currentLesson.title}
-                </h2>
-                <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs text-slate-300 leading-relaxed">
-                  <span className="font-semibold text-slate-200">Executive Summary: </span>
-                  {currentLesson.summary}
-                </div>
-              </div>
+      </div>
+    );
+  }
 
-              {/* Key Takeaways Card */}
-              {currentLesson.key_takeaways && currentLesson.key_takeaways.length > 0 && (
-                <div className="rounded-2xl border border-brand-500/20 bg-brand-950/20 p-5 backdrop-blur-md">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-brand-300 mb-3">
-                    <Key className="h-4 w-4 text-accent-cyan" />
-                    <span>Core Learning Milestones</span>
-                  </div>
-                  <ul className="space-y-2">
-                    {currentLesson.key_takeaways.map((takeaway, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-accent-cyan shrink-0 mt-0.5" />
-                        <span>{takeaway}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Markdown Content Reader */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md markdown-body shadow-lg">
-                <ReactMarkdown>
-                  {currentLesson.content_markdown}
-                </ReactMarkdown>
-              </div>
-
-              {/* Concept Dependency Graph */}
-              {currentModule.concept_nodes && currentModule.concept_nodes.length > 0 && (
-                <ConceptGraph nodes={currentModule.concept_nodes} />
-              )}
-
-              {/* Interactive Quiz Assessment */}
-              {currentLesson.quiz && currentLesson.quiz.length > 0 && (
-                <QuizWidget 
-                  questions={currentLesson.quiz} 
-                  lessonTitle={currentLesson.title}
-                  onAskTutor={onAskTutor}
-                />
-              )}
-
-              {/* Paging / Navigation Controls */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-                {prevLesson ? (
-                  <button
-                    onClick={() => onSelectLesson(prevLesson.moduleId, prevLesson.lesson.lesson_id)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span className="truncate max-w-[150px]">Prev: {prevLesson.lesson.title}</span>
-                  </button>
-                ) : (
-                  <div />
-                )}
-
-                {nextLesson && (
-                  <button
-                    onClick={() => onSelectLesson(nextLesson.moduleId, nextLesson.lesson.lesson_id)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition shadow-md shadow-brand-600/20"
-                  >
-                    <span className="truncate max-w-[150px]">Next: {nextLesson.lesson.title}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
+  // View Mode 2: Focused Lesson Reader Canvas
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      
+      {currentLesson ? (
+        <div className="space-y-6">
+          
+          {/* Lesson Header */}
+          <div className="space-y-2 pb-4 border-b border-slate-800/80">
+            <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+              <span className="text-brand-400">{currentModule.title}</span>
+              <span>•</span>
+              <span>Lesson {currentIndex + 1} of {allLessonsFlat.length}</span>
             </div>
-          ) : (
-            <div className="p-12 text-center rounded-2xl border border-slate-800 bg-slate-900/60 text-slate-400">
-              <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-40 text-brand-400" />
-              <p>Select a lesson from the curriculum sidebar to start reading.</p>
+            
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              {currentLesson.title}
+            </h1>
+          </div>
+
+          {/* Executive Summary Callout */}
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs text-slate-300 leading-relaxed">
+            <span className="font-semibold text-slate-200">Core Focus: </span>
+            {currentLesson.summary}
+          </div>
+
+          {/* Key Takeaways */}
+          {currentLesson.key_takeaways && currentLesson.key_takeaways.length > 0 && (
+            <div className="p-4 rounded-xl border border-slate-800/70 bg-[#0f1523]/70 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+                <Key className="h-3.5 w-3.5 text-brand-400" />
+                <span>Key Learning Milestones</span>
+              </div>
+              <ul className="space-y-1.5 pl-1">
+                {currentLesson.key_takeaways.map((takeaway, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-xs text-slate-300 leading-relaxed">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{takeaway}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
-        </main>
-      </div>
+
+          {/* Core Markdown Content */}
+          <div className="markdown-body pt-2 leading-relaxed">
+            <ReactMarkdown>
+              {currentLesson.content_markdown}
+            </ReactMarkdown>
+          </div>
+
+          {/* Prerequisite Knowledge Graph */}
+          {currentModule.concept_nodes && currentModule.concept_nodes.length > 0 && (
+            <div className="pt-4">
+              <ConceptGraph nodes={currentModule.concept_nodes} />
+            </div>
+          )}
+
+          {/* Interactive Quiz Assessment */}
+          {currentLesson.quiz && currentLesson.quiz.length > 0 && (
+            <div className="pt-2">
+              <QuizWidget 
+                questions={currentLesson.quiz} 
+                lessonTitle={currentLesson.title}
+                lessonContent={currentLesson.content_markdown}
+                onAskTutor={onAskTutor}
+              />
+            </div>
+          )}
+
+          {/* Bottom Pagination Bar */}
+          <div className="flex items-center justify-between pt-6 border-t border-slate-800/80">
+            {prevLesson ? (
+              <button
+                onClick={() => onSelectLesson(prevLesson.moduleId, prevLesson.lesson.lesson_id)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 text-xs font-medium transition"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span className="truncate max-w-[180px]">Prev: {prevLesson.lesson.title}</span>
+              </button>
+            ) : (
+              <div />
+            )}
+
+            {nextLesson && (
+              <button
+                onClick={() => onSelectLesson(nextLesson.moduleId, nextLesson.lesson.lesson_id)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition shadow-sm"
+              >
+                <span className="truncate max-w-[180px]">Next: {nextLesson.lesson.title}</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+        </div>
+      ) : (
+        <div className="p-12 text-center rounded-2xl border border-slate-800/80 bg-[#0f1523]/60 text-slate-400">
+          <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-40 text-brand-400" />
+          <p className="text-xs">Select a lesson from the syllabus sidebar to begin reading.</p>
+        </div>
+      )}
+
     </div>
   );
 };

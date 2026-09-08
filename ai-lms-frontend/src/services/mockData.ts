@@ -75,7 +75,8 @@ Single-layer perceptrons can only classify data that is **linearly separable** (
                 "It converts linear equations into quadratic equations"
               ],
               correct_answer: "It shifts the activation boundary away from the origin when inputs are zero",
-              hint: "Consider what happens to the output if all input feature values x are 0. Can the neuron output anything other than 0 without a bias?"
+              hint: "Consider what happens to the output if all input feature values x are 0. Can the neuron output anything other than 0 without a bias?",
+              difficulty: "Easy"
             },
             {
               id: "q1_2",
@@ -87,7 +88,8 @@ Single-layer perceptrons can only classify data that is **linearly separable** (
                 "NOT gate"
               ],
               correct_answer: "XOR (Exclusive OR) gate",
-              hint: "Think about drawing a single straight line through a 2D plot of inputs (0,0), (0,1), (1,0), (1,1). Which pattern cannot be split by one line?"
+              hint: "Think about drawing a single straight line through a 2D plot of inputs (0,0), (0,1), (1,0), (1,1). Which pattern cannot be split by one line?",
+              difficulty: "Medium"
             }
           ]
         },
@@ -136,7 +138,8 @@ No matter how many millions of layers you stack, a deep linear network can **nev
                 "The output becomes non-deterministic"
               ],
               correct_answer: "It functions identically to a single-layer linear model",
-              hint: "Remember matrix associativity: W2 * (W1 * x) = (W2 * W1) * x = W_combined * x."
+              hint: "Remember matrix associativity: W2 * (W1 * x) = (W2 * W1) * x = W_combined * x.",
+              difficulty: "Medium"
             }
           ]
         }
@@ -199,7 +202,8 @@ where $\\eta$ is the **learning rate**.
                 "Fourier Spectral Analysis"
               ],
               correct_answer: "The Multivariate Chain Rule",
-              hint: "How do you take the derivative of a composite function f(g(x)) with respect to x?"
+              hint: "How do you take the derivative of a composite function f(g(x)) with respect to x?",
+              difficulty: "Hard"
             }
           ]
         }

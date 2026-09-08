@@ -1,33 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { ViewTab, Course } from '../types';
+import React, { useState } from 'react';
+import { Course, Module, Lesson } from '../types';
 import { apiService } from '../services/api';
 import { 
-  GraduationCap, 
-  LayoutDashboard, 
-  BookOpen, 
-  Columns, 
+  PanelLeft, 
+  ChevronRight, 
+  Bot, 
   UploadCloud, 
   Server, 
-  CheckCircle2, 
-  AlertCircle,
-  RefreshCw,
-  Sparkles
+  RefreshCw, 
+  X,
+  Sparkles,
+  BookOpen
 } from 'lucide-react';
 
 interface NavbarProps {
-  currentTab: ViewTab;
-  onSelectTab: (tab: ViewTab) => void;
   activeCourse: Course | null;
-  onNewUploadClick: () => void;
+  activeModule: Module | undefined;
+  activeLesson: Lesson | undefined;
+  isOverviewActive: boolean;
+  isSidebarOpen: boolean;
+  onToggleSidebar: () => void;
+  isTutorOpen: boolean;
+  onToggleTutor: () => void;
+  onOpenUpload: () => void;
+  onLoadDemoCourse?: () => void;
   isBackendOnline: boolean;
   onCheckBackendHealth: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  currentTab,
-  onSelectTab,
   activeCourse,
-  onNewUploadClick,
+  activeModule,
+  activeLesson,
+  isOverviewActive,
+  isSidebarOpen,
+  onToggleSidebar,
+  isTutorOpen,
+  onToggleTutor,
+  onOpenUpload,
+  onLoadDemoCourse,
   isBackendOnline,
   onCheckBackendHealth,
 }) => {
@@ -50,162 +61,151 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-background/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelectTab('dashboard')}>
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-cyan p-0.5 shadow-lg shadow-brand-500/20 flex items-center justify-center">
-              <div className="h-full w-full bg-background rounded-[10px] flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-brand-400" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                  MindForge
+      <header className="h-13 border-b border-slate-800/80 bg-[#0b0f17]/90 backdrop-blur-md px-4 flex items-center justify-between shrink-0 select-none z-20">
+        
+        {/* Left: Sidebar Toggle & Breadcrumb */}
+        <div className="flex items-center gap-2 min-w-0 pr-4">
+          {!isSidebarOpen && (
+            <button
+              onClick={onToggleSidebar}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-850 border border-slate-800 transition shrink-0"
+              title="Open Sidebar"
+            >
+              <PanelLeft className="h-4 w-4" />
+            </button>
+          )}
+
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 truncate min-w-0">
+            {activeCourse ? (
+              <>
+                <span className="font-medium text-slate-300 truncate max-w-[140px] sm:max-w-[200px]" title={activeCourse.course_title}>
+                  {activeCourse.course_title}
                 </span>
-                <span className="text-xs px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/20 font-mono font-medium">
-                  AI LMS
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                Adaptive Curriculum & Socratic Tutor
-              </p>
-            </div>
-          </div>
+                <ChevronRight className="h-3 w-3 text-slate-600 shrink-0" />
 
-          {/* Navigation Views */}
-          <nav className="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => onSelectTab('dashboard')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                currentTab === 'dashboard'
-                  ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              onClick={() => onSelectTab('course')}
-              disabled={!activeCourse}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                !activeCourse
-                  ? 'opacity-40 cursor-not-allowed text-slate-500'
-                  : currentTab === 'course'
-                  ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <BookOpen className="h-4 w-4" />
-              <span>Course Explorer</span>
-            </button>
-
-            <button
-              onClick={() => onSelectTab('split-tutor')}
-              disabled={!activeCourse}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                !activeCourse
-                  ? 'opacity-40 cursor-not-allowed text-slate-500'
-                  : currentTab === 'split-tutor'
-                  ? 'bg-gradient-to-r from-brand-600 to-accent-violet text-white shadow-sm shadow-brand-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <Columns className="h-4 w-4" />
-              <span className="flex items-center gap-1">
-                Split Socratic
-                <Sparkles className="h-3 w-3 text-accent-cyan animate-pulse" />
-              </span>
-            </button>
-          </nav>
-
-          {/* Right Actions: Backend Status & Upload CTA */}
-          <div className="flex items-center gap-3">
-            {/* Backend Connectivity Status */}
-            <div 
-              onClick={() => setShowConfigModal(true)}
-              title="Click to check or configure FastAPI Backend URL"
-              className="group cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:border-slate-700 transition"
-            >
-              <span className="relative flex h-2 w-2">
-                {isBackendOnline ? (
-                  <>
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </>
+                {isOverviewActive ? (
+                  <span className="text-white font-medium truncate">
+                    Syllabus Overview
+                  </span>
                 ) : (
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                  <>
+                    {activeModule && (
+                      <>
+                        <span className="text-slate-400 truncate hidden md:inline max-w-[160px]" title={activeModule.title}>
+                          {activeModule.title}
+                        </span>
+                        <ChevronRight className="h-3 w-3 text-slate-600 shrink-0 hidden md:inline" />
+                      </>
+                    )}
+                    {activeLesson && (
+                      <span className="text-white font-medium truncate max-w-[180px] sm:max-w-[260px]" title={activeLesson.title}>
+                        {activeLesson.title}
+                      </span>
+                    )}
+                  </>
                 )}
+              </>
+            ) : (
+              <span className="text-slate-300 font-medium flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5 text-brand-400" />
+                <span>Upload Course Material</span>
               </span>
-              <span className="text-xs font-mono text-slate-300 hidden md:inline">
-                {isBackendOnline ? 'FastAPI :8000' : 'Demo Mode'}
-              </span>
-              <Server className="h-3.5 w-3.5 text-slate-400 group-hover:text-brand-400 transition" />
-            </div>
-
-            {/* Quick Upload CTA */}
-            <button
-              onClick={onNewUploadClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white text-xs sm:text-sm font-medium shadow-md shadow-brand-600/20 hover:shadow-brand-600/30 transition active:scale-95"
-            >
-              <UploadCloud className="h-4 w-4" />
-              <span className="hidden sm:inline">Upload PDF</span>
-            </button>
+            )}
           </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          
+          {/* Quick Demo Button if no course active */}
+          {!activeCourse && onLoadDemoCourse && (
+            <button
+              onClick={onLoadDemoCourse}
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-brand-400" />
+              <span>Load Demo</span>
+            </button>
+          )}
+
+          {/* Quick Ingest Button */}
+          <button
+            onClick={onOpenUpload}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition shadow-sm"
+          >
+            <UploadCloud className="h-3.5 w-3.5 text-white" />
+            <span>Upload PDF</span>
+          </button>
+
+          {/* Backend Status Dot */}
+          <button
+            onClick={() => setShowConfigModal(true)}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-800/80 bg-slate-900/50 hover:bg-slate-800/60 text-slate-400 text-xs transition"
+            title="FastAPI Server Status"
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${isBackendOnline ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            <span className="text-[11px] font-mono text-slate-400 hidden lg:inline">
+              {isBackendOnline ? 'API :8000' : 'Demo'}
+            </span>
+          </button>
+
+          {/* Toggle Socratic Tutor Companion */}
+          <button
+            onClick={onToggleTutor}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm ${
+              isTutorOpen
+                ? 'bg-brand-600 text-white'
+                : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+            }`}
+            title={isTutorOpen ? 'Close Socratic Tutor Panel' : 'Open Socratic Tutor Panel'}
+          >
+            <Bot className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">
+              {isTutorOpen ? 'Hide Tutor' : 'Ask Tutor'}
+            </span>
+          </button>
+
         </div>
       </header>
 
       {/* Backend API Configuration Modal */}
       {showConfigModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl ${isBackendOnline ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-                  {isBackendOnline ? <CheckCircle2 className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-white">Backend Connection</h3>
-                  <p className="text-xs text-slate-400">
-                    {isBackendOnline ? 'Connected to FastAPI server' : 'Backend is currently offline (Demo mode active)'}
-                  </p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-[#0f1523] border border-slate-800 rounded-2xl p-5 max-w-sm w-full shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/80">
+              <div className="flex items-center gap-2">
+                <Server className="h-4 w-4 text-brand-400" />
+                <h3 className="text-sm font-semibold text-white">Backend Server</h3>
+              </div>
+              <button 
+                onClick={() => setShowConfigModal(false)}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800/80 mb-4 text-xs">
+              <div className={`h-2 w-2 rounded-full shrink-0 ${isBackendOnline ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              <div className="text-slate-300">
+                {isBackendOnline 
+                  ? 'Connected to FastAPI (:8000)'
+                  : 'FastAPI unreachable (local demo mode active)'}
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-              The frontend communicates with your FastAPI backend at <code className="text-brand-300 bg-slate-800 px-1 py-0.5 rounded">http://127.0.0.1:8000</code> for <span className="text-slate-100 font-medium">/api/upload</span>, <span className="text-slate-100 font-medium">/api/generate-course</span>, and <span className="text-slate-100 font-medium">/api/chat</span>.
-            </p>
-
-            <form onSubmit={handleSaveApiUrl} className="space-y-4">
+            <form onSubmit={handleSaveApiUrl} className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  FastAPI Server URL
+                <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                  API Target Host
                 </label>
                 <input
                   type="text"
                   value={customApiUrl}
                   onChange={(e) => setCustomApiUrl(e.target.value)}
                   placeholder="http://127.0.0.1:8000"
-                  className="w-full px-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
+                  className="w-full px-3 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500 font-mono"
                 />
-              </div>
-
-              <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
-                <div className="flex justify-between">
-                  <span>Target Host:</span>
-                  <span className="font-mono text-slate-200">{apiService.getBaseUrl()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Status:</span>
-                  <span className={isBackendOnline ? 'text-emerald-400 font-medium' : 'text-amber-400 font-medium'}>
-                    {isBackendOnline ? 'Operational' : 'Unreachable (Using mock fallback)'}
-                  </span>
-                </div>
               </div>
 
               <div className="flex items-center justify-between pt-2">
@@ -213,27 +213,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                   type="button"
                   onClick={handleHealthCheck}
                   disabled={isChecking}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition"
                 >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isChecking ? 'animate-spin' : ''}`} />
-                  <span>{isChecking ? 'Checking...' : 'Retest Server'}</span>
+                  <RefreshCw className={`h-3 w-3 ${isChecking ? 'animate-spin' : ''}`} />
+                  <span>{isChecking ? 'Checking...' : 'Retest'}</span>
                 </button>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowConfigModal(false)}
-                    className="px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-medium transition"
-                  >
-                    Close
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition shadow-md shadow-brand-600/30"
-                  >
-                    Apply URL
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition"
+                >
+                  Save URL
+                </button>
               </div>
             </form>
           </div>
