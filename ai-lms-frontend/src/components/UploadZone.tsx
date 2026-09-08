@@ -15,7 +15,7 @@ import {
 interface UploadZoneProps {
   isOpen?: boolean;
   onClose?: () => void;
-  onCourseGenerated: (course: Course) => void;
+  onCourseGenerated: (course: Course, fileName?: string) => void;
   isBackendOnline: boolean;
 }
 
@@ -112,7 +112,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
       setStatusMessage('Course ready!');
 
       setTimeout(() => {
-        onCourseGenerated(generatedCourse);
+        onCourseGenerated(generatedCourse, selectedFile?.name);
         onClose?.();
         resetState();
       }, 500);
@@ -155,7 +155,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
       setStatusMessage('Course synthesized!');
 
       setTimeout(() => {
-        onCourseGenerated(generatedCourse);
+        onCourseGenerated(generatedCourse, 'compiler_design_sample.pdf');
         onClose?.();
         resetState();
       }, 500);
@@ -175,7 +175,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
       setProgressPercent(100);
       setCurrentStep('complete');
       setTimeout(() => {
-        onCourseGenerated(SAMPLE_COURSE);
+        onCourseGenerated(SAMPLE_COURSE, 'sample_compiler_course.pdf');
         onClose?.();
         resetState();
       }, 400);

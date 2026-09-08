@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Course, ChatMessage } from './types';
+import { Course, ChatMessage, UploadHistoryItem } from './types';
 import { SAMPLE_COURSE, INITIAL_SOCRATIC_MESSAGES } from './services/mockData';
 import { apiService } from './services/api';
 import { Sidebar } from './components/Sidebar';
@@ -21,6 +21,11 @@ export const App: React.FC = () => {
   const [isTutorOpen, setIsTutorOpen] = useState<boolean>(false);
   const [isQuizOpen, setIsQuizOpen] = useState<boolean>(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+
+  // Upload History state persisted in localStorage
+  const [uploadHistory, setUploadHistory] = useState<UploadHistoryItem[]>(() => {
+    return apiService.loadUploadHistory();
+  });
 
   // Stable session identifier for current course or general chat history
   const sessionId = activeCourse 
@@ -80,13 +85,18 @@ export const App: React.FC = () => {
     };
   }, [sessionId]);
 
-  // Handle course generation via PDF upload
-  const handleCourseGenerated = (course: Course) => {
+  // Handle course generation via PDF upload or demo load
+  const handleCourseGenerated = (course: Course, fileName?: string) => {
     setActiveCourse(course);
+    let firstModId = '';
+    let firstLessonId = '';
+
     if (course.modules && course.modules.length > 0) {
       const firstMod = course.modules[0];
+      firstModId = firstMod.module_id;
       setActiveModuleId(firstMod.module_id);
       if (firstMod.lessons && firstMod.lessons.length > 0) {
+        firstLessonId = firstMod.lessons[0].lesson_id;
         setActiveLessonId(firstMod.lessons[0].lesson_id);
       }
     }
@@ -97,7 +107,7 @@ export const App: React.FC = () => {
     const welcomeMsg: ChatMessage = {
       id: `intro-${Date.now()}`,
       role: 'assistant',
-      content: `Welcome to **${course.course_title}**! I have indexed the textbook content. Feel free to explore the lessons, and ask me any questions whenever you'd like conceptual guidance!`,
+      content: `Welcome to **${course.course_title}**! I have indexed the textbook content. Feel free to explore the lessons, quizzes, and ask me any questions whenever you'd like conceptual guidance!`,
       timestamp: Date.now(),
       citations: [1],
       sessionId: newSessionId
@@ -106,11 +116,72 @@ export const App: React.FC = () => {
     setChatMessages([welcomeMsg]);
     apiService.saveLocalChatHistory([welcomeMsg], newSessionId);
     apiService.saveChatMessage(welcomeMsg, newSessionId);
+
+    // Compute curriculum metadata counts
+    const totalModules = course.modules?.length || 0;
+    const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
+    const totalQuizzes = (course.quizzes?.length || 0) + (course.modules?.reduce((acc, m) => acc + (m.quizzes?.length || 0), 0) || 0);
+
+    // Save to upload history so it appears in the sidebar history section
+    const historyItem: UploadHistoryItem = {
+      id: `upload_${Date.now()}`,
+      sessionId: newSessionId,
+      courseTitle: course.course_title,
+      documentName: fileName || (course.overview?.slice(0, 45) ? `${course.overview.slice(0, 45)}...` : 'Uploaded Document'),
+      timestamp: Date.now(),
+      course: course,
+      activeModuleId: firstModId,
+      activeLessonId: firstLessonId,
+      totalModules,
+      totalLessons,
+      totalQuizzes
+    };
+
+    const updatedList = apiService.addOrUpdateUploadHistory(historyItem);
+    setUploadHistory(updatedList);
+  };
+
+  // Restore an uploaded course along with all associated quizzes, lessons, and AI tutor chat
+  const handleSelectUploadHistory = (item: UploadHistoryItem) => {
+    setActiveCourse(item.course);
+
+    const targetModId = item.activeModuleId || item.course.modules?.[0]?.module_id || '';
+    const targetMod = item.course.modules?.find(m => m.module_id === targetModId) || item.course.modules?.[0];
+    const targetLessonId = item.activeLessonId || targetMod?.lessons?.[0]?.lesson_id || '';
+
+    setActiveModuleId(targetModId);
+    setActiveLessonId(targetLessonId);
+    setIsOverviewActive(false);
+
+    // Restore associated AI tutor chat activities
+    const savedChat = apiService.loadLocalChatHistory(item.sessionId);
+    if (savedChat && savedChat.length > 0) {
+      setChatMessages(savedChat);
+    } else {
+      const welcomeMsg: ChatMessage = {
+        id: `restore-${Date.now()}`,
+        role: 'assistant',
+        content: `Welcome back to **${item.courseTitle}**! All your lessons, quizzes, and tutoring notes have been restored. What would you like to explore?`,
+        timestamp: Date.now(),
+        sessionId: item.sessionId
+      };
+      setChatMessages([welcomeMsg]);
+      apiService.saveLocalChatHistory([welcomeMsg], item.sessionId);
+    }
+
+    // Ensure dedicated quiz panel is visible
+    setIsQuizOpen(true);
+  };
+
+  // Remove an item from the upload history
+  const handleDeleteUploadHistory = (id: string) => {
+    const updated = apiService.deleteUploadHistoryItem(id);
+    setUploadHistory(updated);
   };
 
   // Only load demo course when explicitly asked by user
   const handleLoadDemoCourse = () => {
-    handleCourseGenerated(SAMPLE_COURSE);
+    handleCourseGenerated(SAMPLE_COURSE, 'Compiler_Design_Lecture_Notes.pdf');
   };
 
   const handleSelectLesson = (moduleId: string, lessonId: string) => {
@@ -228,20 +299,19 @@ export const App: React.FC = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#0b0f17] text-slate-100">
       
-      {/* 1. Left Sidebar: Chat History by default + Syllabus when course is loaded */}
+      {/* 1. Left Sidebar: Upload History by default + Syllabus when course is loaded */}
       <Sidebar
         course={activeCourse}
         activeModuleId={activeModuleId}
         activeLessonId={activeLessonId}
-        chatMessages={chatMessages}
+        uploadHistory={uploadHistory}
+        onSelectUploadHistory={handleSelectUploadHistory}
+        onDeleteUploadHistory={handleDeleteUploadHistory}
         onSelectLesson={handleSelectLesson}
         onOpenOverview={handleOpenOverview}
         isOverviewActive={isOverviewActive}
         onOpenUpload={() => setIsUploadModalOpen(true)}
         onLoadDemoCourse={handleLoadDemoCourse}
-        onExportChat={handleExportChat}
-        onResetChat={handleResetChat}
-        onSelectChatMessage={handleAskTutorPrompt}
         isOpen={isSidebarOpen}
         onToggle={() => setIsSidebarOpen(prev => !prev)}
         isBackendOnline={isBackendOnline}

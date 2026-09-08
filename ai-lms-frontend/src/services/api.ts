@@ -1,4 +1,4 @@
-import { Course, UploadResponse, ChatRequest, ChatResponse, QuizQuestion, ChatMessage } from '../types';
+import { Course, UploadResponse, ChatRequest, ChatResponse, QuizQuestion, ChatMessage, UploadHistoryItem } from '../types';
 import { SAMPLE_COURSE } from './mockData';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -254,6 +254,51 @@ class ApiService {
     } catch (e) {
       console.warn('Failed to clear local chat history:', e);
     }
+  }
+
+  /**
+   * Upload History Management (persisted in localStorage)
+   */
+  loadUploadHistory(): UploadHistoryItem[] {
+    try {
+      const raw = localStorage.getItem('mindforge_upload_history');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to load local upload history:', e);
+    }
+    return [];
+  }
+
+  saveUploadHistory(history: UploadHistoryItem[]): void {
+    try {
+      localStorage.setItem('mindforge_upload_history', JSON.stringify(history));
+    } catch (e) {
+      console.warn('Failed to persist upload history:', e);
+    }
+  }
+
+  addOrUpdateUploadHistory(item: UploadHistoryItem): UploadHistoryItem[] {
+    const current = this.loadUploadHistory();
+    const existingIdx = current.findIndex(h => h.id === item.id || h.sessionId === item.sessionId);
+    let updated: UploadHistoryItem[];
+    if (existingIdx >= 0) {
+      updated = [...current];
+      updated[existingIdx] = { ...current[existingIdx], ...item, timestamp: Date.now() };
+    } else {
+      updated = [item, ...current];
+    }
+    this.saveUploadHistory(updated);
+    return updated;
+  }
+
+  deleteUploadHistoryItem(id: string): UploadHistoryItem[] {
+    const current = this.loadUploadHistory();
+    const filtered = current.filter(h => h.id !== id && h.sessionId !== id);
+    this.saveUploadHistory(filtered);
+    return filtered;
   }
 
   /**

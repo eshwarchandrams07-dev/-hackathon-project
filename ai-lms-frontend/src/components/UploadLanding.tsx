@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 interface UploadLandingProps {
-  onCourseGenerated: (course: Course) => void;
+  onCourseGenerated: (course: Course, fileName?: string) => void;
   onLoadDemoCourse: () => void;
   isBackendOnline: boolean;
 }
@@ -111,7 +111,7 @@ export const UploadLanding: React.FC<UploadLandingProps> = ({
       setStatusMessage('Course ready! Launching workspace...');
 
       setTimeout(() => {
-        onCourseGenerated(generatedCourse);
+        onCourseGenerated(generatedCourse, selectedFile?.name);
       }, 500);
 
     } catch (err: any) {
@@ -152,7 +152,7 @@ export const UploadLanding: React.FC<UploadLandingProps> = ({
       setStatusMessage('Course synthesized!');
 
       setTimeout(() => {
-        onCourseGenerated(generatedCourse);
+        onCourseGenerated(generatedCourse, 'compiler_design_sample.pdf');
       }, 500);
     } catch (err: any) {
       console.error('Sample ingestion error:', err);

@@ -75,4 +75,19 @@ export interface ChatResponse {
 }
 
 
+export interface UploadHistoryItem {
+  id: string;
+  sessionId: string;
+  courseTitle: string;
+  documentName: string;
+  timestamp: number;
+  course: Course;
+  activeModuleId?: string;
+  activeLessonId?: string;
+  totalModules: number;
+  totalLessons: number;
+  totalQuizzes: number;
+  messageCount?: number;
+}
+
 export type ViewTab = 'dashboard' | 'course' | 'split-tutor';
