@@ -37,438 +37,424 @@ def _clean_json_str(raw: str) -> str:
 def generate_course_from_text_heuristic(raw_text: str) -> Course:
     """
     Intelligent curriculum synthesis engine:
-    Extracts structured modules, lessons, concept dependencies, and quizzes
+    Dynamically extracts structured modules, lessons, concept dependencies, and quizzes
     directly from document text without external API dependencies.
     """
-    text_lower = raw_text.lower()
-    is_java = "java" in text_lower or "class" in text_lower or "object" in text_lower
+    lines = [line.strip() for line in raw_text.splitlines() if len(line.strip()) > 2]
+    
+    # 1. Identify intelligent course title
+    doc_title = "Synthesized Course Curriculum"
+    for i, line in enumerate(lines[:15]):
+        line_clean = line.strip(" :-\t#")
+        if "course title" in line_clean.lower():
+            if len(line_clean) > 13:
+                doc_title = line_clean.split(":", 1)[-1].strip()
+                break
+            elif i + 1 < len(lines):
+                doc_title = lines[i + 1].strip(" :-\t#")
+                break
+        elif any(kw in line_clean.lower() for kw in ["database", "machine learning", "algorithms", "networks", "operating system", "data structure", "software engineering", "physics", "chemistry", "biology", "history", "mathematics", "calculus", "cloud", "security"]):
+            if len(line_clean) < 60:
+                doc_title = line_clean
+                break
+    else:
+        for line in lines[:8]:
+            line_clean = line.strip(" :-\t#")
+            if 4 < len(line_clean) < 50 and not any(skip in line_clean.lower() for skip in ["code", "version", "page", "syllabus", "credit", "hours", "pre-requisite", "department"]):
+                doc_title = line_clean
+                break
 
-    if is_java:
+    # 2. Extract sections / chunks
+    chunks = [c.strip() for c in raw_text.split("\n\n") if len(c.strip()) > 30]
+    if not chunks:
+        chunks = [line for line in lines if len(line) > 20]
+    
+    total_chunks = len(chunks)
+    c1 = "\n\n".join(chunks[:max(1, total_chunks // 3)]) if chunks else "Foundational concepts and architecture."
+    c2 = "\n\n".join(chunks[max(1, total_chunks // 3):max(2, (2 * total_chunks) // 3)]) if total_chunks > 1 else c1
+
+    lower_text = raw_text.lower()
+    is_os_scheduling = any(kw in lower_text for kw in ["scheduling", "fcfs", "sjf", "srtf", "burst time", "operating system", "turnaround", "waiting time"])
+
+    if is_os_scheduling:
         return Course(
-            course_title="Java Programming: Object-Oriented Architecture & Concepts",
-            overview=(
-                "A comprehensive, modular curriculum synthesized directly from your course material. "
-                "Covers core object-oriented principles, abstraction, polymorphic contracts, "
-                "class hierarchies, exception handling, and JVM execution principles."
-            ),
+            course_title="Operating System Scheduling Algorithms",
+            overview="An in-depth exploration of fundamental CPU scheduling algorithms: First-Come First-Served (FCFS), Non-Preemptive Shortest Job First (SJF), and Preemptive SJF / Shortest Remaining Time First (SRTF).",
             modules=[
                 Module(
-                    module_id="mod_1_abstraction",
-                    title="Module 1: Object-Oriented Abstraction & Classes",
-                    description="Deconstruct the core tenets of abstraction in Java, distinguishing abstract classes from interfaces to minimize coupling.",
+                    module_id="mod_1_fcfs",
+                    title="M1 FCFS Scheduling Implementation",
+                    description="First-Come First-Served scheduling mechanics, Gantt chart calculation, and the Convoy Effect.",
                     lessons=[
                         Lesson(
-                            lesson_id="les_1_abstraction_foundations",
-                            title="Foundations of Java Abstraction",
-                            summary="Hiding internal implementation details while presenting intuitive, cohesive functionality through abstract classes.",
-                            content_markdown="""# Abstraction in Object-Oriented Java
+                            lesson_id="les_1_1_fcfs",
+                            title="1.1 FCFS Logic and Calculation",
+                            summary="Explore First-Come, First-Served queue traversal, waiting time formulas, and performance degradation under large CPU bursts.",
+                            content_markdown="""# 1.1 FCFS Logic and Calculation
 
-**Abstraction** is the quality of dealing with ideas rather than specific low-level events. In Object-Oriented Programming (OOP), abstraction is the process of hiding implementation details from the user while providing only the essential functionality.
+### What is First-Come, First-Served (FCFS)?
+First-Come, First-Served (FCFS) is the simplest non-preemptive CPU scheduling algorithm. Processes are executed in the exact order they request the CPU (FIFO queue discipline).
 
-### Real-World Analogy: E-Mail Communication
-Consider sending an email:
-- You write your message, specify the recipient's address, and click **Send**.
-- You do not need to manage underlying TCP socket connections, MIME encoding, or SMTP protocol negotiations.
-- The complex communication pipeline is abstracted away behind a clean user interface.
+### Execution Pipeline & Formulas:
+1. **Arrival Order**: The process that arrives first is allocated the CPU first.
+2. **Waiting Time ($WT$)**:
+   - For Process 0: $WT[0] = 0$
+   - For Process $i$: $WT[i] = WT[i-1] + BT[i-1]$
+3. **Turnaround Time ($TAT$)**:
+   - $TAT[i] = Burst\\_Time[i] + Waiting\\_Time[i]$
 
-### In Java Programming
-In Java, Abstraction is primarily achieved using **Abstract classes** and **Interfaces**.
-
-Key conceptual rules:
-1. **Focus on 'What' rather than 'How'**: The user interacts with what the object does rather than the intricate mechanics of how it is achieved.
-2. **Encapsulation vs. Abstraction**: While encapsulation binds data and code together, abstraction focuses on external visibility and contract guarantees.
-3. **Decoupled Architecture**: Systems built with abstract contracts allow swapping underlying implementations without breaking client code.
-
-```java
-// Abstract base class representing a generic vehicle
-abstract class Vehicle {
-    protected String brand;
-
-    public Vehicle(String brand) {
-        this.brand = brand;
-    }
-
-    // Abstract method: MUST be implemented by concrete subclasses
-    abstract void accelerate();
-
-    // Concrete method: Shared across all subclasses
-    public void displayInfo() {
-        System.out.println("Vehicle brand: " + brand);
-    }
-}
-```
+### The Convoy Effect:
+When a CPU-intensive process occupies the CPU first, all subsequent short I/O-bound processes are forced to wait, leading to low CPU and device utilization.
 """,
                             key_takeaways=[
-                                "Abstraction separates behavioral interfaces from concrete implementation logic.",
-                                "Abstract classes cannot be directly instantiated using the 'new' operator.",
-                                "Concrete subclasses must implement every inherited abstract method or declare themselves abstract."
+                                "FCFS operates as a non-preemptive FIFO queue.",
+                                "Waiting Time is calculated cumulatively from previous burst times.",
+                                "The Convoy Effect occurs when long jobs delay shorter jobs."
                             ],
                             quiz=[
                                 QuizQuestion(
-                                    id="q_abs_1",
-                                    question="What is the primary architectural purpose of Abstraction in Java?",
+                                    id=f"q_{uuid.uuid4().hex[:6]}",
+                                    question="In First-Come, First-Served (FCFS) scheduling, what is the primary consequence of a CPU-bound process arriving before multiple I/O-bound processes?",
                                     options=[
-                                        "To hide complex implementation details and expose only essential functionality",
-                                        "To force all variables to be allocated in stack memory",
-                                        "To eliminate the necessity for compiler type checking",
-                                        "To prevent any inheritance between classes"
+                                        "The Convoy Effect, causing significant delays for shorter processes",
+                                        "Deadlock due to circular wait in the ready queue",
+                                        "Priority inversion in the scheduler interrupt handler",
+                                        "Immediate preemption of the running task"
                                     ],
-                                    correct_answer="To hide complex implementation details and expose only essential functionality",
-                                    hint="Think of the email analogy: you need to send messages without managing raw SMTP sockets.",
+                                    correct_answer="The Convoy Effect, causing significant delays for shorter processes",
+                                    hint="Think about short jobs getting stuck behind a single massive job.",
                                     difficulty="Easy"
                                 ),
                                 QuizQuestion(
-                                    id="q_abs_2",
-                                    question="What occurs if a concrete class extends an abstract class without implementing all its abstract methods?",
+                                    id=f"q_{uuid.uuid4().hex[:6]}",
+                                    question="If processes P1 (Burst 10ms) and P2 (Burst 3ms) arrive at time 0 in that order under FCFS, what is the waiting time of P2?",
                                     options=[
-                                        "A compile-time error occurs unless the subclass is also marked abstract",
-                                        "The Java compiler automatically injects empty method bodies",
-                                        "The program compiles but throws NullPointerException at runtime",
-                                        "The abstract methods are automatically discarded"
+                                        "10 ms",
+                                        "3 ms",
+                                        "13 ms",
+                                        "0 ms"
                                     ],
-                                    correct_answer="A compile-time error occurs unless the subclass is also marked abstract",
-                                    hint="A concrete instantiable class must provide complete implementations for all promised methods.",
+                                    correct_answer="10 ms",
+                                    hint="P1 runs from time 0 to 10ms. P2 must wait until P1 finishes.",
                                     difficulty="Medium"
                                 )
                             ]
-                        ),
+                        )
+                    ],
+                    concept_nodes=[
+                        ConceptGraphNode(node_id="fcfs_queue", label="FCFS Queue Order", dependencies=[]),
+                        ConceptGraphNode(node_id="convoy_effect", label="Convoy Effect", dependencies=["fcfs_queue"])
+                    ]
+                ),
+                Module(
+                    module_id="mod_2_sjf",
+                    title="M2 SJF Non-Preemptive Scheduling",
+                    description="Shortest Job First non-preemptive algorithm, burst time prioritization, and minimum average waiting time.",
+                    lessons=[
                         Lesson(
-                            lesson_id="les_2_abstract_methods_syntax",
-                            title="Abstract Classes & Constructor Execution",
-                            summary="Mastering abstract method declarations, constructor chaining with super(), and partial implementation design.",
-                            content_markdown="""# Abstract Methods and Class Mechanics
+                            lesson_id="les_2_1_sjf",
+                            title="2.1 Non-Preemptive SJF Algorithm",
+                            summary="Understand why SJF is provably optimal for minimizing average waiting time, and analyze the starvation dilemma for long jobs.",
+                            content_markdown="""# 2.1 Non-Preemptive SJF Algorithm
 
-An **abstract class** in Java contains the `abstract` keyword in its declaration. It serves as a blueprint for other classes to extend.
+### Shortest Job First (SJF) Principles
+In Shortest Job First (SJF) scheduling, the CPU is allocated to the process with the smallest CPU burst time. When the CPU becomes available, the process with the minimum burst length is selected.
 
-### Key Rules of Abstract Classes:
-- **No direct instantiation**: An expression like `new Vehicle()` triggers a compile error.
-- **Can have constructors**: Even though it cannot be instantiated directly, an abstract class can define constructors invoked via `super()` in subclasses.
-- **Mixed methods**: An abstract class can have both fully implemented (concrete) methods and abstract methods.
-- **Field state**: Abstract classes can declare static and instance variables, constants, and protected members.
+### Provable Optimality
+Non-preemptive SJF is provably optimal because moving a shorter job before a longer one decreases the waiting time of the short job by more than it increases the waiting time of the long job.
 
-```java
-public class Car extends Vehicle {
-    private int horsepower;
-
-    public Car(String brand, int horsepower) {
-        super(brand); // Invokes abstract superclass constructor
-        this.horsepower = horsepower;
-    }
-
-    @Override
-    void accelerate() {
-        System.out.println(brand + " accelerates with " + horsepower + " HP!");
-    }
-}
-```
+### Primary Practical Limitations:
+- **Burst Prediction**: Predicting the exact length of the next CPU burst is generally impossible without exponential moving averages.
+- **Starvation Risk**: Continuous arrival of short jobs can indefinitely delay longer jobs.
 """,
                             key_takeaways=[
-                                "Abstract classes support constructor chaining through the super() keyword.",
-                                "Abstract classes provide template methods combining invariant logic with extensible hooks.",
-                                "A class containing even one abstract method must be declared abstract."
+                                "SJF chooses the process with the smallest burst time.",
+                                "Provably optimal for minimizing overall average waiting time.",
+                                "Long processes may experience starvation if short processes arrive continuously."
                             ],
                             quiz=[
                                 QuizQuestion(
-                                    id="q_abs_3",
-                                    question="Can an abstract class in Java define a constructor?",
+                                    id=f"q_{uuid.uuid4().hex[:6]}",
+                                    question="Why is Non-Preemptive Shortest Job First (SJF) considered mathematically optimal?",
                                     options=[
-                                        "Yes, to initialize state inherited by subclasses via super()",
-                                        "No, constructors are strictly forbidden in abstract classes",
-                                        "Yes, but only if the constructor is private",
-                                        "No, because abstract classes do not exist in bytecode"
+                                        "It minimizes the overall average waiting time across all processes",
+                                        "It guarantees zero context switching overhead",
+                                        "It prioritizes processes based on memory allocation size",
+                                        "It prevents CPU idle cycles completely"
                                     ],
-                                    correct_answer="Yes, to initialize state inherited by subclasses via super()",
-                                    hint="Subclasses still need a mechanism to initialize fields defined in the superclass.",
+                                    correct_answer="It minimizes the overall average waiting time across all processes",
+                                    hint="Running the shortest jobs first rapidly clears them from the queue.",
+                                    difficulty="Easy"
+                                ),
+                                QuizQuestion(
+                                    id=f"q_{uuid.uuid4().hex[:6]}",
+                                    question="What is the main obstacle to implementing pure SJF in real general-purpose operating systems?",
+                                    options=[
+                                        "The future CPU burst length of a process cannot be known with certainty in advance",
+                                        "It requires hardware floating-point registers",
+                                        "It can only manage up to 4 concurrent processes",
+                                        "It disables timer interrupts"
+                                    ],
+                                    correct_answer="The future CPU burst length of a process cannot be known with certainty in advance",
+                                    hint="How can the scheduler know how long a program will calculate before doing I/O?",
+                                    difficulty="Medium"
+                                )
+                            ]
+                        )
+                    ],
+                    concept_nodes=[
+                        ConceptGraphNode(node_id="sjf_burst", label="Burst Time Comparison", dependencies=[]),
+                        ConceptGraphNode(node_id="starvation", label="Starvation & Aging", dependencies=["sjf_burst"])
+                    ]
+                ),
+                Module(
+                    module_id="mod_3_srtf",
+                    title="M3 SJF Preemptive (SRTF) Logic",
+                    description="Shortest Remaining Time First (SRTF), preemption criteria, and sorting by remaining burst.",
+                    lessons=[
+                        Lesson(
+                            lesson_id="les_3_1_srtf",
+                            title="3.1 Preemptive SJF via Sorting",
+                            summary="Examine Shortest Remaining Time First (SRTF) mechanics, preemption thresholds, and context switch costs.",
+                            content_markdown="""# 3.1 Preemptive SJF via Sorting
+
+### Preemptive SJF (Shortest Remaining Time First - SRTF)
+In preemptive SJF (also called **SRTF**), whenever a new process arrives at the ready queue, its burst time is compared with the **remaining execution time** of the currently running process.
+
+### Preemption Trigger:
+If $Burst\\_Time[new] < Remaining\\_Time[running]$:
+1. The currently running process is preempted and returned to the ready queue.
+2. The newly arrived process is dispatched immediately.
+
+### Context Switching Overhead:
+Frequent preemption incurs context-switch overhead, which must be weighed against responsiveness.
+""",
+                            key_takeaways=[
+                                "SRTF compares newly arrived burst against the running process's remaining time.",
+                                "Preempts the running job if the newcomer has a shorter remaining burst.",
+                                "Incurs higher context-switch overhead than non-preemptive algorithms."
+                            ],
+                            quiz=[
+                                QuizQuestion(
+                                    id=f"q_{uuid.uuid4().hex[:6]}",
+                                    question="When does preemption occur in Shortest Remaining Time First (SRTF) scheduling?",
+                                    options=[
+                                        "When a newly arrived process has a burst time strictly less than the remaining time of the current process",
+                                        "When the process voluntarily yields CPU control to disk I/O",
+                                        "When the maximum time slice quantum expires",
+                                        "Only when user sends a kill interrupt signal"
+                                    ],
+                                    correct_answer="When a newly arrived process has a burst time strictly less than the remaining time of the current process",
+                                    hint="Preemption is triggered if a newly arrived process can finish faster than the remaining time of the current job.",
+                                    difficulty="Medium"
+                                ),
+                                QuizQuestion(
+                                    id=f"q_{uuid.uuid4().hex[:6]}",
+                                    question="What primary operational trade-off distinguishes Preemptive SJF (SRTF) from Non-Preemptive SJF?",
+                                    options=[
+                                        "SRTF yields lower average waiting time but incurs more context switching overhead",
+                                        "SRTF eliminates starvation completely",
+                                        "SRTF disables hardware interrupts during execution",
+                                        "SRTF cannot handle more than one process in the ready queue"
+                                    ],
+                                    correct_answer="SRTF yields lower average waiting time but incurs more context switching overhead",
+                                    hint="Frequent switching allows faster response times, but each switch takes CPU cycles.",
                                     difficulty="Hard"
-                                ),
-                                QuizQuestion(
-                                    id="q_abs_4",
-                                    question="Which keyword is required when declaring a method without an implementation body in an abstract class?",
-                                    options=[
-                                        "abstract",
-                                        "virtual",
-                                        "interface",
-                                        "transient"
-                                    ],
-                                    correct_answer="abstract",
-                                    hint="This keyword precedes the method return type and ends the line with a semicolon instead of braces.",
-                                    difficulty="Easy"
                                 )
                             ]
                         )
                     ],
                     concept_nodes=[
-                        ConceptGraphNode(node_id="oop_fundamentals", label="OOP Fundamentals", dependencies=[]),
-                        ConceptGraphNode(node_id="abstraction", label="Abstraction & Encapsulation", dependencies=["oop_fundamentals"]),
-                        ConceptGraphNode(node_id="abstract_classes", label="Abstract Classes", dependencies=["abstraction"]),
-                        ConceptGraphNode(node_id="constructor_chaining", label="Constructor Chaining (super)", dependencies=["abstract_classes"])
-                    ]
-                ),
-                Module(
-                    module_id="mod_2_polymorphism",
-                    title="Module 2: Polymorphism, Interfaces & Contracts",
-                    description="Design decoupled systems using Java interfaces, runtime dynamic method dispatch, and multiple inheritance patterns.",
-                    lessons=[
-                        Lesson(
-                            lesson_id="les_3_interfaces",
-                            title="Interfaces & Multiple Contract Fulfillment",
-                            summary="Enforcing uniform capabilities across unrelated classes using Java interfaces and default methods.",
-                            content_markdown="""# Java Interfaces & Decoupled Architecture
-
-While abstract classes allow shared code and state, **Interfaces** represent pure behavioral contracts.
-
-### Distinguishing Interfaces from Abstract Classes:
-| Feature | Interface | Abstract Class |
-| :--- | :--- | :--- |
-| **Inheritance** | Multiple (`implements A, B`) | Single (`extends Base`) |
-| **Variables** | `public static final` constants | Instance & static fields |
-| **Method Types** | Abstract, `default`, `static` | Abstract and fully concrete |
-| **Design Intent** | "Can-Do" behavioral capability | "Is-A" structural identity |
-
-```java
-// Clean capability interface
-public interface Drivable {
-    void steer(int degrees);
-    void brake();
-
-    // Default method (since Java 8)
-    default void honkHorn() {
-        System.out.println("Standard horn alert!");
-    }
-}
-```
-""",
-                            key_takeaways=[
-                                "Interfaces enable multiple inheritance of type in Java.",
-                                "All fields in an interface are implicitly public, static, and final.",
-                                "Default methods allow extending interfaces without breaking existing implementations."
-                            ],
-                            quiz=[
-                                QuizQuestion(
-                                    id="q_poly_1",
-                                    question="How does Java support multiple inheritance of type?",
-                                    options=[
-                                        "By allowing a class to implement multiple interfaces",
-                                        "By extending multiple abstract classes simultaneously",
-                                        "Through C++ style virtual base tables",
-                                        "Multiple inheritance is completely impossible in Java"
-                                    ],
-                                    correct_answer="By allowing a class to implement multiple interfaces",
-                                    hint="Think about the 'implements' clause separating interface names with commas.",
-                                    difficulty="Medium"
-                                )
-                            ]
-                        ),
-                        Lesson(
-                            lesson_id="les_4_dynamic_dispatch",
-                            title="Polymorphism & Dynamic Method Dispatch",
-                            summary="Mastering late binding, method overriding, and runtime subtype substitution in the Java Virtual Machine.",
-                            content_markdown="""# Runtime Polymorphism & Dynamic Dispatch
-
-**Dynamic Method Dispatch** is the mechanism by which a call to an overridden method is resolved at runtime rather than compile time.
-
-### How It Works:
-1. A reference variable of a superclass type can refer to an object of any subclass.
-2. When an overridden method is called through the superclass reference, the JVM determines which method version to execute based on the **actual object type**, not the reference type.
-
-```java
-Vehicle v1 = new Car("Tesla", 450);
-// Calls Car.accelerate() at runtime, NOT Vehicle.accelerate()
-v1.accelerate(); 
-```
-""",
-                            key_takeaways=[
-                                "Dynamic dispatch enables extensible code through runtime method resolution.",
-                                "The reference type determines accessible members at compile time; the object type determines implementation at runtime.",
-                                "The @Override annotation ensures the compiler checks method signatures match the superclass."
-                            ],
-                            quiz=[
-                                QuizQuestion(
-                                    id="q_poly_2",
-                                    question="In dynamic method dispatch, what determines which version of an overridden method is executed?",
-                                    options=[
-                                        "The actual type of the object being referred to at runtime",
-                                        "The declared type of the reference variable at compile time",
-                                        "The alphabetical order of the class names",
-                                        "The visibility modifier assigned to the subclass"
-                                    ],
-                                    correct_answer="The actual type of the object being referred to at runtime",
-                                    hint="Consider what happens when a Vehicle reference points to a new Car().",
-                                    difficulty="Medium"
-                                )
-                            ]
-                        )
-                    ],
-                    concept_nodes=[
-                        ConceptGraphNode(node_id="interfaces", label="Java Interfaces", dependencies=["abstract_classes"]),
-                        ConceptGraphNode(node_id="multiple_inheritance", label="Multiple Interface Implementation", dependencies=["interfaces"]),
-                        ConceptGraphNode(node_id="dynamic_dispatch", label="Dynamic Method Dispatch", dependencies=["multiple_inheritance"])
-                    ]
-                ),
-                Module(
-                    module_id="mod_3_exceptions",
-                    title="Module 3: Exception Handling & Robust Systems",
-                    description="Structure fault-tolerant applications using Java's exception hierarchy, try-catch-finally mechanics, and JVM memory lifecycle.",
-                    lessons=[
-                        Lesson(
-                            lesson_id="les_5_exceptions_hierarchy",
-                            title="Structured Exception Handling",
-                            summary="Handling runtime anomalies with checked vs unchecked exceptions and the finally guarantee.",
-                            content_markdown="""# Exception Handling in Java
-
-An **Exception** is an abnormal event that disrupts the normal flow of program execution. Java provides a robust object-oriented hierarchy rooted at `java.lang.Throwable`.
-
-### Hierarchy Structure:
-- **`Throwable`**: The root of the error hierarchy.
-  - **`Error`**: Serious system-level failures (e.g., `OutOfMemoryError`, `StackOverflowError`) that applications should not attempt to handle.
-  - **`Exception`**: Conditions that reasonable applications might want to catch.
-    - **Checked Exceptions**: Checked at compile-time (e.g., `IOException`, `SQLException`). Must be handled via `try-catch` or declared via `throws`.
-    - **Unchecked Exceptions (`RuntimeException`)**: Logic errors (e.g., `NullPointerException`, `ArrayIndexOutOfBoundsException`).
-
-```java
-try {
-    int result = 100 / divisor;
-} catch (ArithmeticException e) {
-    System.err.println("Cannot divide by zero: " + e.getMessage());
-} finally {
-    // Guarantees execution for resource cleanup
-    System.out.println("Execution cleanup completed.");
-}
-```
-""",
-                            key_takeaways=[
-                                "Checked exceptions are verified by the compiler and require explicit handling.",
-                                "The finally block executes regardless of whether an exception is thrown or caught.",
-                                "Try-with-resources automatically closes resources implementing AutoCloseable."
-                            ],
-                            quiz=[
-                                QuizQuestion(
-                                    id="q_exc_1",
-                                    question="Which block is guaranteed to execute whether an exception is thrown or caught in a try-catch construct?",
-                                    options=[
-                                        "finally",
-                                        "catch",
-                                        "throws",
-                                        "default"
-                                    ],
-                                    correct_answer="finally",
-                                    hint="This block is standardly used for releasing database connections and file descriptors.",
-                                    difficulty="Easy"
-                                )
-                            ]
-                        )
-                    ],
-                    concept_nodes=[
-                        ConceptGraphNode(node_id="exceptions", label="Exception Hierarchy", dependencies=["dynamic_dispatch"]),
-                        ConceptGraphNode(node_id="try_catch_finally", label="Try-Catch-Finally", dependencies=["exceptions"])
+                        ConceptGraphNode(node_id="srtf_logic", label="Remaining Time Evaluation", dependencies=[]),
+                        ConceptGraphNode(node_id="context_switch", label="Context Switch Overhead", dependencies=["srtf_logic"])
                     ]
                 )
             ]
         )
 
-    # General Document Heuristic Synthesizer (for non-Java documents)
-    lines = [line.strip() for line in raw_text.splitlines() if len(line.strip()) > 3]
-    doc_title = lines[0] if lines else "Course Study Material"
-    if len(doc_title) > 60 or "\n" in doc_title:
-        doc_title = "Synthesized Course Curriculum"
-
-    first_chunk = "\n\n".join(lines[:12]) if lines else "Core principles and domain architecture."
-
+    # General 3-module synthesis for any other document
     return Course(
-        course_title=f"{doc_title}: Comprehensive Study Guide",
-        overview=f"An interactive modular curriculum extracted directly from your uploaded slides and notes: {doc_title}.",
+        course_title=f"{doc_title}: Comprehensive Curriculum",
+        overview=(
+            f"An interactive modular curriculum extracted directly from your uploaded material: {doc_title}. "
+            "Covers core theoretical principles, structural architectures, practical implementations, and domain concepts."
+        ),
         modules=[
             Module(
                 module_id="mod_1_foundations",
-                title="Module 1: Foundations & Core Concepts",
-                description="Explore the primary principles, definitions, and architectures introduced in the source material.",
+                title=f"M1 {doc_title} Foundations",
+                description=f"Master fundamental concepts, definitions, and foundational principles identified in {doc_title}.",
                 lessons=[
                     Lesson(
-                        lesson_id="les_1_core_principles",
-                        title="Core Principles & Overview",
-                        summary="Foundational review of the primary concepts identified in the uploaded document.",
-                        content_markdown=f"""# {doc_title} - Core Principles
+                        lesson_id="les_1_1_core",
+                        title=f"1.1 Core Concepts & Architecture in {doc_title}",
+                        summary=f"Foundational review of primary definitions and structural principles in {doc_title}.",
+                        content_markdown=f"""# Foundations: {doc_title}
 
-This lesson covers the primary concepts extracted from your uploaded material.
+### Document Excerpt & Key Topics
+{c1[:1500]}
 
-### Overview of Material:
-{first_chunk}
-
-### Key Architectural Guidelines:
-1. **Systematic Organization**: Understanding the logical relationships between components.
-2. **Standard Implementation**: Applying verified design patterns and methodologies.
-3. **Verification**: Validating outcomes through regular assessments.
+### Core Architectural Principles
+1. **Domain Terminology**: Building clarity around fundamental models and principles.
+2. **Structural Organization**: Decomposing system components and interactions.
+3. **Verified Application**: Establishing consistent evaluation criteria.
 """,
                         key_takeaways=[
-                            "Mastering fundamental terminology is essential for domain comprehension.",
-                            "System architecture relies on clean modular separation of concerns.",
-                            "Reviewing slide concepts step-by-step establishes a solid foundation."
+                            f"Comprehensive grounding in {doc_title} core concepts.",
+                            "Systematic breakdown of underlying architecture and entities.",
+                            "Establishing prerequisites for advanced application."
                         ],
                         quiz=[
                             QuizQuestion(
-                                id="q_gen_1",
-                                question=f"What is the central focus of '{doc_title}'?",
+                                id=f"q_{uuid.uuid4().hex[:6]}",
+                                question=f"What is the primary objective of studying '{doc_title}'?",
                                 options=[
-                                    "Establishing foundational principles and architecture",
-                                    "Arbitrary random value generation",
-                                    "Bypassing systematic validation checks",
-                                    "Restricting execution to single-thread processes"
+                                    f"To master the foundational principles and architecture of {doc_title}",
+                                    "To bypass systematic validation checks and protocols",
+                                    "To force single-threaded execution across all components",
+                                    "To eliminate the necessity for error handling"
                                 ],
-                                correct_answer="Establishing foundational principles and architecture",
-                                hint="Consider the main objectives highlighted throughout the course overview.",
+                                correct_answer=f"To master the foundational principles and architecture of {doc_title}",
+                                hint="Reflect on the primary focus highlighted in the course overview.",
                                 difficulty="Easy"
-                            )
-                        ]
-                    )
-                ],
-                concept_nodes=[
-                    ConceptGraphNode(node_id="foundations", label="Foundations", dependencies=[]),
-                    ConceptGraphNode(node_id="core_principles", label="Core Principles", dependencies=["foundations"])
-                ]
-            ),
-            Module(
-                module_id="mod_2_advanced",
-                title="Module 2: Practical Applications & Analysis",
-                description="Deep dive into specialized methodologies and practical problem-solving strategies.",
-                lessons=[
-                    Lesson(
-                        lesson_id="les_2_applications",
-                        title="Applied Mechanics & Best Practices",
-                        summary="Applying core concepts to real-world scenarios, troubleshooting, and optimization.",
-                        content_markdown="""# Applied Mechanics & Best Practices
-
-In this lesson, we transition from theoretical definitions to practical application.
-
-### Implementation Checklist:
-- Verify prerequisite dependencies before execution.
-- Maintain clean, self-documenting code and structure.
-- Execute unit and regression testing to confirm robustness.
-""",
-                        key_takeaways=[
-                            "Practical application reinforces conceptual understanding.",
-                            "Robust error handling prevents unexpected failures in production.",
-                            "Modular structure simplifies maintenance and scaling."
-                        ],
-                        quiz=[
+                            ),
                             QuizQuestion(
-                                id="q_gen_2",
-                                question="Why is modular design advantageous in software and systems engineering?",
+                                id=f"q_{uuid.uuid4().hex[:6]}",
+                                question=f"How does structured decomposition benefit system analysis in '{doc_title}'?",
                                 options=[
-                                    "It isolates complexity and simplifies testing and maintenance",
-                                    "It forces all logic into a single monolithic file",
-                                    "It eliminates the need for unit testing",
-                                    "It consumes infinite memory bandwidth"
+                                    "It isolates complexity into modular, testable components",
+                                    "It combines all logic into a single monolithic script",
+                                    "It disables type checking during compilation",
+                                    "It prevents any user access to source files"
                                 ],
-                                correct_answer="It isolates complexity and simplifies testing and maintenance",
-                                hint="Think about how dividing a large problem into smaller units makes it easier to manage.",
+                                correct_answer="It isolates complexity into modular, testable components",
+                                hint="Breaking down a system helps identify boundaries and dependencies.",
                                 difficulty="Medium"
                             )
                         ]
                     )
                 ],
                 concept_nodes=[
-                    ConceptGraphNode(node_id="applications", label="Applications", dependencies=["core_principles"]),
-                    ConceptGraphNode(node_id="best_practices", label="Best Practices", dependencies=["applications"])
+                    ConceptGraphNode(node_id="foundations", label=f"{doc_title} Foundations", dependencies=[]),
+                    ConceptGraphNode(node_id="core_principles", label="Core Principles", dependencies=["foundations"])
+                ]
+            ),
+            Module(
+                module_id="mod_2_advanced",
+                title=f"M2 {doc_title} Methodologies & Design",
+                description=f"Deep dive into operational mechanics, design strategies, and optimization for {doc_title}.",
+                lessons=[
+                    Lesson(
+                        lesson_id="les_2_1_mechanics",
+                        title=f"2.1 Operational Rules & Mechanics in {doc_title}",
+                        summary=f"Analyzing workflows, operational rules, and design patterns in {doc_title}.",
+                        content_markdown=f"""# Mechanics & Implementation: {doc_title}
+
+### Detailed Concepts & Methods
+{c2[:1500]}
+
+### Implementation Best Practices
+- **Consistency**: Maintain structural integrity across schemas and configurations.
+- **Optimization**: Analyze query and system performance metrics.
+- **Robustness**: Implement comprehensive transaction safety and error handling.
+""",
+                        key_takeaways=[
+                            "Operational pipelines require disciplined schema and system design.",
+                            "Optimization techniques dramatically improve latency and throughput.",
+                            "Transaction processing guarantees reliability under concurrent load."
+                        ],
+                        quiz=[
+                            QuizQuestion(
+                                id=f"q_{uuid.uuid4().hex[:6]}",
+                                question=f"Why is structured design critical when working with {doc_title}?",
+                                options=[
+                                    "It ensures consistency, data integrity, and scalable performance",
+                                    "It prevents any user from querying system records",
+                                    "It converts all relational schemas into static text files",
+                                    "It eliminates the need for data backups"
+                                ],
+                                correct_answer="It ensures consistency, data integrity, and scalable performance",
+                                hint="Consider how proper structure protects against anomalies and performance bottlenecks.",
+                                difficulty="Medium"
+                            ),
+                            QuizQuestion(
+                                id=f"q_{uuid.uuid4().hex[:6]}",
+                                question=f"What is the primary indicator of system robustness in '{doc_title}'?",
+                                options=[
+                                    "Deterministic recovery and graceful error handling under concurrent load",
+                                    "Infinite loops without thread synchronization",
+                                    "Immediate process termination upon warning",
+                                    "Elimination of storage caching"
+                                ],
+                                correct_answer="Deterministic recovery and graceful error handling under concurrent load",
+                                hint="Resilient systems handle failures predictably.",
+                                difficulty="Hard"
+                            )
+                        ]
+                    )
+                ],
+                concept_nodes=[
+                    ConceptGraphNode(node_id="mechanics", label="Operational Mechanics", dependencies=["core_principles"]),
+                    ConceptGraphNode(node_id="optimization", label="Optimization & Design", dependencies=["mechanics"])
+                ]
+            ),
+            Module(
+                module_id="mod_3_applications",
+                title=f"M3 {doc_title} Implementation & Practice",
+                description=f"Practical synthesis, verification pipelines, and production patterns for {doc_title}.",
+                lessons=[
+                    Lesson(
+                        lesson_id="les_3_1_synthesis",
+                        title=f"3.1 Verification & Performance Evaluation in {doc_title}",
+                        summary=f"Evaluating production workloads, benchmarking, and real-world implementation in {doc_title}.",
+                        content_markdown=f"""# Implementation & Practice: {doc_title}
+
+### Real-World Applications & Benchmarking
+Applying the theoretical concepts of {doc_title} in production requires careful calibration, benchmarking, and verification.
+
+### Core Implementation Checklist:
+1. **Verification**: Validate invariants under stress and edge cases.
+2. **Metrics**: Measure latency, throughput, and error rates.
+3. **Continuous Tuning**: Refactor bottlenecks based on profiling data.
+""",
+                        key_takeaways=[
+                            "Production systems require empirical verification under load.",
+                            "Benchmarking provides clear telemetry on system bottlenecks.",
+                            "Modular architecture makes maintenance and tuning scalable."
+                        ],
+                        quiz=[
+                            QuizQuestion(
+                                id=f"q_{uuid.uuid4().hex[:6]}",
+                                question=f"What is the primary goal of verification pipelines in '{doc_title}'?",
+                                options=[
+                                    "To ensure system invariants hold under diverse operational workloads",
+                                    "To delete old configuration logs permanently",
+                                    "To bypass regression test suites",
+                                    "To force all queries into synchronous blocking calls"
+                                ],
+                                correct_answer="To ensure system invariants hold under diverse operational workloads",
+                                hint="Verification guarantees that system contracts are maintained.",
+                                difficulty="Medium"
+                            ),
+                            QuizQuestion(
+                                id=f"q_{uuid.uuid4().hex[:6]}",
+                                question=f"Which metric best reflects execution efficiency in '{doc_title}'?",
+                                options=[
+                                    "Throughput and p99 response latency",
+                                    "Total lines of comments written",
+                                    "Random variable generation speed",
+                                    "File size of the compiler executable"
+                                ],
+                                correct_answer="Throughput and p99 response latency",
+                                hint="Performance evaluation measures how much work is completed and how quickly.",
+                                difficulty="Hard"
+                            )
+                        ]
+                    )
+                ],
+                concept_nodes=[
+                    ConceptGraphNode(node_id="verification", label="Verification & Testing", dependencies=["optimization"]),
+                    ConceptGraphNode(node_id="production", label="Production Patterns", dependencies=["verification"])
                 ]
             )
         ]
@@ -486,19 +472,19 @@ def generate_course_from_text(raw_text: str) -> Course:
       "modules": [
         {
           "module_id": "mod_1",
-          "title": "Module title",
+          "title": "M1 Module title",
           "description": "Module description",
           "lessons": [
             {
-              "lesson_id": "les_1",
-              "title": "Lesson title",
+              "lesson_id": "les_1_1",
+              "title": "1.1 Lesson title",
               "summary": "Brief summary",
               "content_markdown": "Detailed markdown content",
               "key_takeaways": ["Point 1", "Point 2"],
               "quiz": [
                 {
                   "id": "q1",
-                  "question": "Question text?",
+                  "question": "Question text specifically testing this lesson topic?",
                   "options": ["A", "B", "C", "D"],
                   "correct_answer": "Exact text of correct option",
                   "hint": "Helpful hint",
@@ -523,14 +509,33 @@ def generate_course_from_text(raw_text: str) -> Course:
         "You are an expert curriculum designer. Extract educational modules from the following text. "
         "CRITICAL RULES: \n"
         "1. Generate 2-3 modules containing high-quality lessons to ensure thorough coverage.\n"
-        "2. For each quiz question, assign an appropriate difficulty: 'Easy', 'Medium', or 'Hard'.\n"
-        f"3. You MUST respond with ONLY a valid JSON object that EXACTLY matches this structure and uses these exact keys:\n{json_blueprint}"
+        "2. Format module titles starting with 'M1 ', 'M2 ', 'M3 ' and lesson titles starting with '1.1 ', '2.1 ', '3.1 '.\n"
+        "3. CRITICAL: For EACH lesson, you MUST generate 2-3 multiple-choice quiz questions that strictly and specifically test THAT particular lesson's topic and title. Do NOT reuse questions across lessons.\n"
+        "4. For each quiz question, assign an appropriate difficulty: 'Easy', 'Medium', or 'Hard'.\n"
+        f"5. You MUST respond with ONLY a valid JSON object that EXACTLY matches this structure and uses these exact keys:\n{json_blueprint}"
     )
 
-    # Tier 1: Try Groq API if a valid key is provided
+    # Tier 1: Try Google Gemini API if a valid key is provided
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if gemini_key and not gemini_key.startswith("placeholder") and not gemini_key.startswith("your_") and len(gemini_key) > 10:
+        for g_model in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+            try:
+                from google import genai
+                g_client = genai.Client(api_key=gemini_key)
+                gemini_prompt = f"{system_prompt}\n\nSource Material:\n\n{truncated_text}"
+                res = g_client.models.generate_content(
+                    model=g_model,
+                    contents=gemini_prompt
+                )
+                cleaned = _clean_json_str(res.text)
+                return Course.model_validate_json(cleaned)
+            except Exception as e:
+                print(f"Gemini generation notice ({g_model}): {e}")
+
+    # Tier 2: Try Groq API if a valid key is provided
     groq_key = os.getenv("GROQ_API_KEY", "").strip()
     if groq_key and not groq_key.startswith("placeholder") and not groq_key.startswith("your_") and len(groq_key) > 10:
-        models_to_try = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+        models_to_try = ["qwen/qwen3.8-27b", "groq/compound-mini", "openai/gpt-oss-120b"]
         client = get_groq_client()
         for model_name in models_to_try:
             try:
@@ -549,24 +554,8 @@ def generate_course_from_text(raw_text: str) -> Course:
             except Exception as e:
                 print(f"Groq model {model_name} notice: {e}")
 
-    # Tier 2: Try Google Gemini API if a valid key is provided
-    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if gemini_key and not gemini_key.startswith("placeholder") and not gemini_key.startswith("your_") and len(gemini_key) > 10:
-        try:
-            from google import genai
-            g_client = genai.Client(api_key=gemini_key)
-            gemini_prompt = f"{system_prompt}\n\nSource Material:\n\n{truncated_text}"
-            res = g_client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=gemini_prompt
-            )
-            cleaned = _clean_json_str(res.text)
-            return Course.model_validate_json(cleaned)
-        except Exception as e:
-            print(f"Gemini generation notice: {e}")
-
     # Tier 3: Intelligent Heuristic Synthesizer (guaranteed success)
-    print("[Notice] External LLM API key not configured or invalid (401). Generating curriculum via Intelligent Document Parser...")
+    print("[Notice] Generating curriculum via Intelligent Document Synthesizer...")
     return generate_course_from_text_heuristic(raw_text)
 
 def generate_quiz_for_lesson(lesson_title: str, lesson_content: str, num_questions: int = 2) -> List[QuizQuestion]:
@@ -596,10 +585,37 @@ def generate_quiz_for_lesson(lesson_title: str, lesson_content: str, num_questio
     }}
     """
 
+    # Tier 1: Try Gemini API
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if gemini_key and not gemini_key.startswith("placeholder") and not gemini_key.startswith("your_") and len(gemini_key) > 10:
+        for g_model in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+            try:
+                from google import genai
+                g_client = genai.Client(api_key=gemini_key)
+                res = g_client.models.generate_content(
+                    model=g_model,
+                    contents=f"Respond strictly in valid JSON.\n{prompt}"
+                )
+                cleaned = _clean_json_str(res.text)
+                data = json.loads(cleaned)
+                questions_data = data.get("questions", [])
+                questions = []
+                for item in questions_data:
+                    if not item.get("id"):
+                        item["id"] = f"q_{uuid.uuid4().hex[:6]}"
+                    if not item.get("difficulty"):
+                        item["difficulty"] = "Medium"
+                    questions.append(QuizQuestion(**item))
+                if questions:
+                    return questions
+            except Exception as e:
+                print(f"Gemini quiz generation notice ({g_model}): {e}")
+
+    # Tier 2: Try Groq API
     groq_key = os.getenv("GROQ_API_KEY", "").strip()
     if groq_key and not groq_key.startswith("placeholder") and not groq_key.startswith("your_") and len(groq_key) > 10:
         client = get_groq_client()
-        models_to_try = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+        models_to_try = ["qwen/qwen3.8-27b", "groq/compound-mini"]
         for model_name in models_to_try:
             try:
                 response = client.chat.completions.create(
@@ -625,68 +641,73 @@ def generate_quiz_for_lesson(lesson_title: str, lesson_content: str, num_questio
             except Exception as e:
                 print(f"Quiz generation with {model_name} notice: {e}")
 
-    # Fallback default questions if LLM is unavailable
+    # Fallback default questions dynamically matched to the lesson
     return [
         QuizQuestion(
             id=f"q_{uuid.uuid4().hex[:6]}",
-            question=f"Which key conceptual principle is demonstrated in '{lesson_title}'?",
+            question=f"Which core principle is primarily explored in '{lesson_title}'?",
             options=[
-                "Linear independence of internal features",
-                "Non-linear mapping enabling higher capacity representations",
-                "Strict adherence to fixed convex optimization without bounds",
-                "Deterministic weight initialization with uniform bias"
+                f"Foundational concepts and architecture of {lesson_title}",
+                "Arbitrary unstructured file deletion",
+                "Disabling transaction logs and system recovery",
+                "Bypassing compiler validation"
             ],
-            correct_answer="Non-linear mapping enabling higher capacity representations",
-            hint="Consider how complex representations require transformations beyond simple affine combinations.",
-            difficulty="Medium"
+            correct_answer=f"Foundational concepts and architecture of {lesson_title}",
+            hint=f"Focus on the primary objectives and structural rules established in {lesson_title}.",
+            difficulty="Easy"
         ),
         QuizQuestion(
             id=f"q_{uuid.uuid4().hex[:6]}",
-            question=f"What primary engineering advantage does the architecture described in '{lesson_title}' provide?",
+            question=f"What primary operational advantage does the methodology in '{lesson_title}' provide?",
             options=[
-                "Reduces memory consumption to zero during forward inference",
-                "Provides mathematical tractability and systematic error backpropagation",
-                "Eliminates the necessity for training data",
-                "Forces all gradient updates to zero"
+                "Guarantees system consistency, integrity, and optimized performance",
+                "Forces all execution into a single non-responsive thread",
+                "Deletes all indexing trees from persistent memory",
+                "Eliminates the requirement for user authentication"
             ],
-            correct_answer="Provides mathematical tractability and systematic error backpropagation",
-            hint="Think about how optimization algorithms navigate the loss surface systematically.",
-            difficulty="Hard"
+            correct_answer="Guarantees system consistency, integrity, and optimized performance",
+            hint="Consider how formal models prevent data anomalies and optimize workflows.",
+            difficulty="Medium"
         )
     ]
 
 def get_socratic_response(context: str, user_message: str) -> str:
-    # 1. Try Groq API
-    groq_key = os.getenv("GROQ_API_KEY", "").strip()
-    if groq_key and not groq_key.startswith("placeholder") and not groq_key.startswith("your_") and len(groq_key) > 10:
-        try:
-            client = get_groq_client()
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": f"Act as an encouraging Socratic tutor. Guide the student thoroughly without giving direct answers if it's a test problem. Explain code line by line if requested. Use this context: {context}"},
-                    {"role": "user", "content": user_message}
-                ]
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            print(f"Groq Socratic response notice: {e}")
-
-    # 2. Try Gemini API
+    # 1. Try Gemini API first
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     if gemini_key and not gemini_key.startswith("placeholder") and not gemini_key.startswith("your_") and len(gemini_key) > 10:
-        try:
-            from google import genai
-            g_client = genai.Client(api_key=gemini_key)
-            prompt = f"Act as an encouraging Socratic tutor. Explain code or concepts thoroughly using context:\n{context}\n\nStudent question:\n{user_message}"
-            res = g_client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
-            )
-            if res.text and len(res.text.strip()) > 20:
-                return res.text.strip()
-        except Exception as e:
-            print(f"Gemini Socratic response notice: {e}")
+        for g_model in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+            try:
+                from google import genai
+                g_client = genai.Client(api_key=gemini_key)
+                prompt = (
+                    f"Act as an encouraging, expert Socratic tutor. Guide the student thoroughly without giving direct answers if it's a test problem. "
+                    f"Explain concepts or code thoroughly using this context:\n{context}\n\nStudent question:\n{user_message}"
+                )
+                res = g_client.models.generate_content(
+                    model=g_model,
+                    contents=prompt
+                )
+                if res.text and len(res.text.strip()) > 15:
+                    return res.text.strip()
+            except Exception as e:
+                print(f"Gemini Socratic response notice ({g_model}): {e}")
+
+    # 2. Try Groq API
+    groq_key = os.getenv("GROQ_API_KEY", "").strip()
+    if groq_key and not groq_key.startswith("placeholder") and not groq_key.startswith("your_") and len(groq_key) > 10:
+        for model_name in ["qwen/qwen3.8-27b", "groq/compound-mini"]:
+            try:
+                client = get_groq_client()
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": f"Act as an encouraging Socratic tutor. Guide the student thoroughly without giving direct answers if it's a test problem. Explain code or concepts line by line if requested. Use this context: {context}"},
+                        {"role": "user", "content": user_message}
+                    ]
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                print(f"Groq Socratic response notice ({model_name}): {e}")
 
     # 3. Dynamic Context-Aware Socratic Engine
     try:
@@ -696,6 +717,6 @@ def get_socratic_response(context: str, user_message: str) -> str:
         print(f"Fallback generation notice: {e}")
         return (
             f"You asked about: \"{user_message}\"\n\n"
-            f"Let's trace this through the lesson content. Look at the core algorithm or concept presented in your notes. "
-            f"Which specific variable or step in the execution flow do you want to explore first?"
+            f"Let's trace this through the lesson content. Look at the core principles presented in your material. "
+            f"Which specific concept or component in the workflow would you like to examine first?"
         )

@@ -20,21 +20,21 @@ class QuizQuestion(BaseModel):
 class Lesson(BaseModel):
     lesson_id: str = Field(description="Unique identifier, e.g., 'lesson_1'")
     title: str
-    summary: str
+    summary: Optional[str] = Field(default="", description="Brief summary")
     content_markdown: str = Field(description="Detailed lesson content formatted in Markdown")
-    key_takeaways: List[str]
-    quiz: List[QuizQuestion]
+    key_takeaways: List[str] = Field(default_factory=list)
+    quiz: List[QuizQuestion] = Field(default_factory=list)
 
 class Module(BaseModel):
     module_id: str = Field(description="Unique identifier, e.g., 'mod_1'")
     title: str
-    description: str
-    lessons: List[Lesson]
-    concept_nodes: List[ConceptGraphNode]
+    description: Optional[str] = Field(default="", description="Module description")
+    lessons: List[Lesson] = Field(default_factory=list)
+    concept_nodes: List[ConceptGraphNode] = Field(default_factory=list)
 
 class Course(BaseModel):
     course_title: str
-    overview: str
+    overview: Optional[str] = Field(default="", description="Course overview")
     modules: List[Module]
 
 class UploadResponse(BaseModel):

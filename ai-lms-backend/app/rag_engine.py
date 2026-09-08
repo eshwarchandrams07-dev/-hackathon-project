@@ -97,7 +97,7 @@ Student Question: {user_query}
     try:
         client = get_gemini_client()
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=prompt
         )
         return {
@@ -128,7 +128,7 @@ Course Context:
     try:
         client = get_gemini_client()
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=prompt
         )
         return response.text
@@ -149,7 +149,7 @@ Course Context:
     try:
         client = get_gemini_client()
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=prompt
         )
         return response.text

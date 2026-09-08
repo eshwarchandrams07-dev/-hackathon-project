@@ -270,10 +270,213 @@ def generate_pros_cons_explanation(query: str, context: str) -> str:
         "In your target application, does consistency outweigh responsiveness?"
     )
 
+def generate_deep_study_mode(meta: dict, context: str, query: str) -> str:
+    """Generate in-depth conceptual breakdown focusing on first principles, deep understanding, analogies, and step-by-step logic."""
+    lesson = meta.get("lesson", "this topic")
+    course = meta.get("course", "your course")
+    lower_ctx = (lesson + " " + context + " " + query).lower()
+
+    if any(k in lower_ctx for k in ["fcfs", "first-come", "scheduling", "cpu"]):
+        return (
+            "### 🧠 [Deep Study Mode Activated] First-Come, First-Served (FCFS) Scheduling\n\n"
+            "Welcome to **Deep Study** mode! Here we break down the concept from first principles so you master the underlying *why* and *how*.\n\n"
+            "#### 1. First Principles: The Need for CPU Scheduling\n"
+            "In modern operating systems, multiple processes compete for limited CPU execution time. "
+            "FCFS is the most elemental non-preemptive scheduling policy: **the process that requests the CPU first gets allocated the CPU first** via a FIFO queue.\n\n"
+            "#### 2. Architecture & State Mechanics\n"
+            "* **The Ready Queue**: New processes are enqueued at the tail (`tail++`). The CPU scheduler dispatches exclusively from the head (`head++`).\n"
+            "* **Non-Preemptive Invariant**: Once assigned, the process holds the CPU until completion or explicit I/O blocking. The kernel cannot interrupt it.\n"
+            "* **Turnaround Time (TAT)** = Burst Time + Waiting Time (`TAT[i] = BT[i] + WT[i]`).\n"
+            "* **Waiting Time (WT)** = Cumulative execution time of all preceding jobs (`WT[i] = WT[i-1] + BT[i-1]`).\n\n"
+            "#### 3. Real-World Analogy: Single Cashier Register\n"
+            "Picture a single grocery checkout cashier. If the first person in line has a full grocery cart of 300 items, and you just want to pay for a 1-dollar bottle of water, "
+            "you are forced to wait for all 300 items to be scanned. This is known as the **Convoy Effect**—where lightweight processes idle behind heavyweight resource hogs.\n\n"
+            "#### 4. Critical Engineering Trade-offs\n"
+            "* **Zero Starvation**: Every process will eventually run because queue positions advance monotonically.\n"
+            "* **Low Scheduler Overhead**: No sorting, priority recalculation, or context switching churn.\n"
+            "* **Severe Sensitivity to Arrival Order**: Average waiting time fluctuates drastically based on which burst time arrives first.\n\n"
+            "---\n\n"
+            "**[Socratic Deep Reflection Question]**:\n"
+            "If Process P1 (BT=24ms) arrives at time 0, and P2 (BT=3ms) and P3 (BT=3ms) arrive at time 0.1ms, what is the average waiting time? "
+            "Now what if P2 and P3 arrived first? Can you calculate how much waiting time the Convoy Effect introduced?"
+        )
+
+    if any(k in lower_ctx for k in ["dbms", "database", "sql", "acid", "transaction", "normalization"]):
+        return (
+            f"### 🧠 [Deep Study Mode Activated] Conceptual Mastery: {lesson}\n\n"
+            f"Welcome to **Deep Study** mode! Let's explore the core architectural foundations of **{lesson}** ({course}).\n\n"
+            f"#### 1. The Foundational Problem\n"
+            f"Why do relational databases and {lesson} exist? At their core, databases solve persistent storage, concurrent access, "
+            f"and crash recovery while preventing state corruption.\n\n"
+            f"#### 2. How the Underlying Mechanism Operates\n"
+            f"* **State Guarantees**: Ensures structural invariants and prevents race conditions or anomalies.\n"
+            f"* **Data Structures**: Relies on optimized indexing structures (like B+ Trees or hash maps) to ensure logarithmic lookups.\n"
+            f"* **Transaction Lifecycle**: Transitions from Active → Partially Committed → Committed (or Aborted with Rollback).\n\n"
+            f"#### 3. Real-World Analogy\n"
+            f"Think of transaction isolation like a bank vault ledger: multiple bank tellers can view and log transactions, "
+            f"but no transfer is permanent until both accounts are verified and the ledger lock is released.\n\n"
+            f"---\n\n"
+            f"**[Socratic Deep Reflection Question]**:\n"
+            f"If an unexpected power failure occurs right between executing an update and writing to the commit log, "
+            f"how does the database engine guarantee that no half-written data corrupts the system?"
+        )
+
+    # General Subject Deep Study
+    clean_p = extract_clean_content(context)
+    summary_excerpt = clean_p[:350].strip() if len(clean_p) > 30 else f"Understanding the fundamental principles of {lesson}."
+    return (
+        f"### 🧠 [Deep Study Mode Activated] Deep-Dive: {lesson}\n\n"
+        f"Welcome to **Deep Study** mode for **{lesson}** (*{course}*)! "
+        f"We will focus on deep conceptual understanding, intuition, and step-by-step logic.\n\n"
+        f"#### 1. Core Principles & Concept Foundation\n"
+        f"> {summary_excerpt}\n\n"
+        f"#### 2. Step-by-Step Logic Breakdown\n"
+        f"* **Initial Conditions**: Understanding the inputs, system state, and requirements.\n"
+        f"* **Execution Process**: Tracing the transformations and operations that govern this topic.\n"
+        f"* **Boundary Conditions**: How the system behaves under heavy loads, edge cases, or resource constraints.\n\n"
+        f"#### 3. Real-World Intuition & Analogy\n"
+        f"To build mental models, relate this concept to physical systems where order of arrival, resource contention, "
+        f"and structured rules prevent chaos and ensure predictability.\n\n"
+        f"---\n\n"
+        f"**[Socratic Thinking Question]**:\n"
+        f"What is the single most important invariant or constraint in {lesson}? What happens if this constraint is violated?"
+    )
+
+def generate_quick_run_mode(meta: dict, context: str, query: str) -> str:
+    """Generate high-velocity revision with main topics, visual ASCII mind map, and high-yield notes."""
+    lesson = meta.get("lesson", "this topic")
+    course = meta.get("course", "your course")
+    lower_ctx = (lesson + " " + context + " " + query).lower()
+
+    if any(k in lower_ctx for k in ["fcfs", "first-come", "scheduling", "cpu"]):
+        return (
+            "### ⚡ [Quick Run Mode Activated] Fast-Track Revision: FCFS Scheduling\n\n"
+            "Here is your high-yield quick summary, structured mind map, and key exam formulas:\n\n"
+            "#### 🎯 Main Topics Focus\n"
+            "* **Classification**: Non-Preemptive CPU Scheduling algorithm.\n"
+            "* **Mechanism**: First-In, First-Out (FIFO) queue order.\n"
+            "* **Key Metric**: Turnaround Time (TAT) = Exit Time - Arrival Time.\n"
+            "* **Core Vulnerability**: Convoy Effect (short jobs blocked by heavy jobs).\n\n"
+            "#### 🗺️ Concept Mind Map\n"
+            "```text\n"
+            "First-Come, First-Served (FCFS)\n"
+            "├── 1. Dispatch Mechanics\n"
+            "│   ├── Queue Structure: FIFO Ready Queue\n"
+            "│   ├── Preemption: Non-preemptive (run-to-completion)\n"
+            "│   └── Ordering Metric: Arrival Time (AT)\n"
+            "├── 2. Mathematical Formulas\n"
+            "│   ├── Completion Time (CT): Time when process execution finishes\n"
+            "│   ├── Turnaround Time (TAT): CT - AT  (or BT + WT)\n"
+            "│   └── Waiting Time (WT): TAT - BT\n"
+            "├── 3. Performance Characteristics\n"
+            "│   ├── Convoy Effect: I/O devices idle behind single CPU-bound job\n"
+            "│   ├── Starvation: 0% (Strict arrival order guarantees execution)\n"
+            "│   └── Throughput: Low when burst time variance is high\n"
+            "└── 4. High-Yield Exam Traps\n"
+            "    ├── Staggered arrival times (arrival time != 0)\n"
+            "    └── CPU idle periods between process arrivals\n"
+            "```\n\n"
+            "#### 📝 Cheat-Sheet Summary\n"
+            "1. **WT[0] = 0** (when arrival time = 0).\n"
+            "2. **WT[i] = WT[i-1] + BT[i-1]** (cumulative waiting time).\n"
+            "3. **Average WT** = `(Sum of all WT) / n`.\n\n"
+            "---\n\n"
+            "**[Quick-Fire Check]**:\n"
+            "Two processes arrive at t=0: P1 (BT=10) and P2 (BT=2). In FCFS, what is the Waiting Time of P2?"
+        )
+
+    if any(k in lower_ctx for k in ["dbms", "database", "sql", "acid", "transaction", "normalization"]):
+        return (
+            f"### ⚡ [Quick Run Mode Activated] Fast-Track Revision: {lesson}\n\n"
+            f"Here is your rapid-fire exam summary and structured concept hierarchy for **{lesson}** ({course}):\n\n"
+            f"#### 🎯 Main Topics Focus\n"
+            f"* **Core Objective**: Data integrity, efficient indexing, and concurrent safety.\n"
+            f"* **ACID Invariants**: Atomicity (All-or-Nothing), Consistency (Valid State), Isolation (Concurrency), Durability (Persistence).\n"
+            f"* **Relational Normalization**: 1NF (Atomic values), 2NF (No partial dependency), 3NF (No transitive dependency), BCNF.\n\n"
+            f"#### 🗺️ Concept Mind Map\n"
+            f"```text\n"
+            f"{lesson}\n"
+            f"├── 1. Schema & Structure\n"
+            f"│   ├── Relational Tables (Tuples & Attributes)\n"
+            f"│   ├── Primary & Foreign Keys (Referential Integrity)\n"
+            f"│   └── Normalization (1NF → 2NF → 3NF → BCNF)\n"
+            f"├── 2. Querying & Indexing\n"
+            f"│   ├── DDL / DML SQL Operations\n"
+            f"│   ├── B+ Tree Indexing (O(log N) disk reads)\n"
+            f"│   └── Query Optimizer (Execution Plan)\n"
+            f"├── 3. Concurrency & Transactions\n"
+            f"│   ├── ACID Properties\n"
+            f"│   ├── 2-Phase Locking (2PL) & Serializability\n"
+            f"│   └── Deadlock Detection & Recovery\n"
+            f"└── 4. High-Yield Exam Takeaways\n"
+            f"    ├── Dirty read vs Non-repeatable read vs Phantom read\n"
+            f"    └── Lossless join vs Dependency preservation\n"
+            f"```\n\n"
+            f"#### 📝 Cheat-Sheet Summary\n"
+            f"* **Index Type**: B+ Tree holds records only at leaf nodes, linked for fast range scans.\n"
+            f"* **Commit Safety**: Write-Ahead Logging (WAL) writes to disk before updating data blocks.\n\n"
+            f"---\n\n"
+            f"**[Quick-Fire Check]**:\n"
+            f"Which ACID property is guaranteed by Write-Ahead Logging (WAL) and recovery logs?"
+        )
+
+    # General Subject Quick Run
+    return (
+        f"### ⚡ [Quick Run Mode Activated] Fast-Track Revision: {lesson}\n\n"
+        f"Here is your high-yield overview, structured mind map, and exam cheat-sheet for **{lesson}** (*{course}*):\n\n"
+        f"#### 🎯 Main Topics Focus\n"
+        f"* **Core Definition**: Key principle and execution purpose.\n"
+        f"* **Critical Mechanism**: Step-by-step processing and data flow.\n"
+        f"* **Key Formulas & Metrics**: Primary performance indicators and evaluation rules.\n\n"
+        f"#### 🗺️ Concept Mind Map\n"
+        f"```text\n"
+        f"{lesson}\n"
+        f"├── 1. Foundations & Fundamentals\n"
+        f"│   ├── Core Problem & Purpose\n"
+        f"│   └── Input & Output Specifications\n"
+        f"├── 2. Structural Mechanism\n"
+        f"│   ├── Processing Pipeline\n"
+        f"│   └── State Invariants & Rules\n"
+        f"├── 3. Quantitative Metrics\n"
+        f"│   ├── Time & Space Complexity\n"
+        f"│   └── Formula Calculations\n"
+        f"└── 4. High-Yield Exam Traps\n"
+        f"    ├── Edge Cases & Boundary Conditions\n"
+        f"    └── Performance Bottlenecks\n"
+        f"```\n\n"
+        f"#### 📝 High-Yield Cheat Sheet\n"
+        f"* **Rule 1**: Understand the basic definition and prerequisite assumptions.\n"
+        f"* **Rule 2**: Identify how inputs directly change the output state.\n"
+        f"* **Rule 3**: Remember edge cases for multiple-choice questions.\n\n"
+        f"---\n\n"
+        f"**[Quick-Fire Check]**:\n"
+        f"Would you like a rapid-fire quiz question on this topic or a formula walkthrough?"
+    )
+
 def generate_intelligent_socratic_reply(context: str, user_query: str, history: Optional[List[dict]] = None) -> str:
     """Main intelligent Socratic response generator with intent detection."""
     q_clean = user_query.strip().lower()
     meta = extract_course_metadata(context)
+
+    # Mode Dispatch: Option 1 (Deep Study)
+    if (
+        q_clean in ["1", "option 1", "deep study", "deep", "deep-study", "1. deep study", "option 1: deep study", "deep study mode"]
+        or "deep study" in q_clean
+        or q_clean.startswith("1.")
+        or ("[study mode: deep study]" in context.lower() and q_clean in ["1", "start", "begin", "yes", "go", "explain", "explain this"])
+    ):
+        return generate_deep_study_mode(meta, context, user_query)
+
+    # Mode Dispatch: Option 2 (Quick Run / Mind Map)
+    if (
+        q_clean in ["2", "option 2", "quick run", "quick", "quick-run", "2. quick run", "option 2: quick run", "quick run mode", "mind map", "mindmap"]
+        or "quick run" in q_clean
+        or "mind map" in q_clean
+        or "mindmap" in q_clean
+        or q_clean.startswith("2.")
+        or ("[study mode: quick run]" in context.lower() and q_clean in ["2", "start", "begin", "yes", "go", "explain", "explain this"])
+    ):
+        return generate_quick_run_mode(meta, context, user_query)
 
     # 0. Check for Greeting, Small Talk, or Help
     words_in_q = set(re.findall(r"\b[a-zA-Z]+\b", q_clean))
@@ -283,17 +486,17 @@ def generate_intelligent_socratic_reply(context: str, user_query: str, history: 
 
     if is_pure_greeting or is_intro_query:
         return (
-            f"### [Socratic Tutor] Hello! Welcome to MindForge\n\n"
-            f"Welcome to your study session on **{meta['lesson']}** (*{meta['course']}*)!\n\n"
-            f"I am your AI Socratic Study Companion. Rather than simply handing out answers, I help you understand the *why* and *how* behind every concept.\n\n"
-            f"**Here are a few things you can ask me right now:**\n"
-            f"* **Code Breakdown**: *\"Explain the code line by line\"* - We will walk through variables, loops, and logic.\n"
-            f"* **Real-World Intuition**: *\"Give me an analogy\"* - Understand how this concept behaves in everyday life.\n"
-            f"* **Quantitative Mastery**: *\"Show me the formulas and calculation steps\"* - See worked examples with numbers.\n"
-            f"* **Trade-Off Analysis**: *\"What are the advantages and disadvantages?\"* - Explore real-world engineering trade-offs.\n"
-            f"* **Assessments**: *\"Give me a hint on the quiz\"* - Get conceptual guidance on practice questions.\n\n"
+            f"### [Socratic Tutor] Welcome to {meta['lesson']}!\n\n"
+            f"I am your AI Socratic Tutor for **{meta['lesson']}** (*{meta['course']}*).\n\n"
+            f"Before we begin, how would you like to study this topic today? Please choose an option:\n\n"
+            f"**1. 🧠 Deep Study**\n"
+            f"* In-depth conceptual understanding from first principles.\n"
+            f"* Intuitive real-world analogies, step-by-step logic, and Socratic questioning.\n\n"
+            f"**2. ⚡ Quick Run**\n"
+            f"* Fast revision focusing on the most important exam topics.\n"
+            f"* Structured ASCII mind maps, cheat sheets, and high-yield summary notes.\n\n"
             f"---\n\n"
-            f"**What would you like to explore first?** Just type your question or pick a starter button below!"
+            f"👉 *Type **1** for Deep Study or **2** for Quick Run, or click the mode buttons above!*"
         )
 
     # 0b. Check for Thanks / Affirmations
@@ -422,36 +625,42 @@ def ask_socratic_tutor_unified(
 ) -> Dict:
     """Unified entry point for Socratic tutoring with multi-tier fallback."""
     # Check if client passed an API key
-    active_gemini_key = api_key if (api_key and api_key.startswith("AIza")) else os.getenv("GEMINI_API_KEY", "").strip()
+    active_gemini_key = api_key if (api_key and (api_key.startswith("AIza") or api_key.startswith("AQ."))) else os.getenv("GEMINI_API_KEY", "").strip()
     active_groq_key = api_key if (api_key and api_key.startswith("gsk_")) else os.getenv("GROQ_API_KEY", "").strip()
 
     # Tier 1: Try Gemini API
     if active_gemini_key and not active_gemini_key.startswith("your_") and not active_gemini_key.startswith("placeholder") and len(active_gemini_key) > 10:
-        try:
-            from google import genai
-            client = genai.Client(api_key=active_gemini_key)
-            prompt = (
-                f"You are an encouraging, expert Socratic AI Tutor on an interactive LMS platform.\n"
-                f"Answer the student's question thoroughly and conversationally using the provided lesson context.\n"
-                f"If the student says 'hi' or greets you, greet them warmly, state the lesson topic, and suggest 3 questions they can explore.\n"
-                f"If the student asks for a code explanation or line-by-line breakdown, provide a clear, comprehensive line-by-line breakdown with syntax formatting.\n"
-                f"If the student asks for an analogy, provide an engaging real-world comparison.\n"
-                f"Conclude with 1 engaging Socratic question that tests their critical thinking.\n\n"
-                f"Lesson Context:\n{lesson_context}\n\n"
-                f"Student Inquiry: {user_query}"
-            )
-            res = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
-            )
-            if res.text and len(res.text.strip()) > 20:
-                return {"answer": res.text.strip(), "citations": [1]}
-        except Exception as e:
-            print(f"[Notice] Gemini tutor API unavailable: {e}")
+        for g_model in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+            try:
+                from google import genai
+                client = genai.Client(api_key=active_gemini_key)
+                prompt = (
+                    f"You are an encouraging, expert Socratic AI Tutor on an interactive LMS platform.\n"
+                    f"Answer the student's question thoroughly and conversationally using the provided lesson context.\n"
+                    f"STUDY MODES:\n"
+                    f"- Option 1 (Deep Study): Provide an in-depth conceptual breakdown from first principles, explaining the underlying mechanism, step-by-step logic, real-world analogies, and Socratic reflection questions.\n"
+                    f"- Option 2 (Quick Run): Teach the most important concepts focusing on main topics, a clean visual ASCII mind map / tree diagram, essential formulas/cheat-sheet points, and high-yield exam takeaways.\n"
+                    f"If the student selects '1' or 'Deep Study', deliver a Deep Study conceptual deep-dive.\n"
+                    f"If the student selects '2' or 'Quick Run' (or asks for mind map), deliver a Quick Run response with an ASCII mind map.\n"
+                    f"If the student greets you (e.g. 'hi'), greet them warmly and ask them to choose Option 1: Deep Study or Option 2: Quick Run.\n"
+                    f"If the student asks for a code explanation or line-by-line breakdown, provide a clear, comprehensive line-by-line breakdown with syntax formatting.\n"
+                    f"If the student asks for an analogy, provide an engaging real-world comparison.\n"
+                    f"Conclude with 1 engaging Socratic question that tests their critical thinking.\n\n"
+                    f"Lesson Context:\n{lesson_context}\n\n"
+                    f"Student Inquiry: {user_query}"
+                )
+                res = client.models.generate_content(
+                    model=g_model,
+                    contents=prompt
+                )
+                if res.text and len(res.text.strip()) > 20:
+                    return {"answer": res.text.strip(), "citations": [1]}
+            except Exception as e:
+                print(f"[Notice] Gemini tutor API ({g_model}) notice: {e}")
 
     # Tier 2: Try Groq API
     if active_groq_key and not active_groq_key.startswith("your_") and not active_groq_key.startswith("placeholder") and len(active_groq_key) > 10:
-        for model_name in ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]:
+        for model_name in ["qwen/qwen3.8-27b", "groq/compound-mini"]:
             try:
                 from app.llm_service import get_groq_client
                 g_client = get_groq_client()
@@ -463,8 +672,11 @@ def ask_socratic_tutor_unified(
                             "content": (
                                 "You are an encouraging Socratic AI Tutor on an LMS platform. "
                                 "Answer the student's question clearly based on the lesson context. "
-                                "If the student greets you (e.g. 'hi'), greet them warmly and suggest 3 topics to explore. "
-                                "If asked for line-by-line code explanation, explain each line in detail. "
+                                "Support two study modes: "
+                                "1. Deep study: help the student understand the concept in depth from first principles, step-by-step logic, and analogies. "
+                                "2. Quick run: teach the important concepts focusing on main topics, structured ASCII mind maps, cheat sheets, and high-yield exam notes. "
+                                "If the student asks for option 1 or 2, respond accordingly. "
+                                "If the student greets you, ask them to pick Option 1: Deep Study or Option 2: Quick Run. "
                                 "End with 1 probing Socratic question."
                             )
                         },
