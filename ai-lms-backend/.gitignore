@@ -4,5 +4,7 @@ __pycache__/
 *.pyc
 chroma_db/
 temp_*
+temp_uploads/
+.cache_docs/
 *.pdf
 .env

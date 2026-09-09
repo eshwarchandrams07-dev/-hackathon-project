@@ -23,13 +23,23 @@ def get_gemini_client():
     return _client
 
 # Vector DB setup
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
+CHROMA_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "chroma_db")
+os.makedirs(CHROMA_PATH, exist_ok=True)
+chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
 emb_fn = embedding_functions.DefaultEmbeddingFunction()
 
 collection = chroma_client.get_or_create_collection(
     name="lms_materials",
     embedding_function=emb_fn
 )
+
+ACTIVE_GEMINI_MODELS = [
+    "gemini-3.6-flash",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.7-flash",
+]
 
 def process_pdf(pdf_path: str, chunk_size: int = 250, overlap: int = 30) -> dict:
     if not os.path.exists(pdf_path):
@@ -96,7 +106,7 @@ Student Question: {user_query}
     citations = list(set([c["page"] for c in context_data if "page" in c]))
     try:
         client = get_gemini_client()
-        for g_model in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash"]:
+        for g_model in ACTIVE_GEMINI_MODELS:
             try:
                 response = client.models.generate_content(
                     model=g_model,
@@ -133,7 +143,7 @@ Course Context:
 """
     try:
         client = get_gemini_client()
-        for g_model in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash"]:
+        for g_model in ACTIVE_GEMINI_MODELS:
             try:
                 response = client.models.generate_content(
                     model=g_model,
@@ -160,7 +170,7 @@ Course Context:
 """
     try:
         client = get_gemini_client()
-        for g_model in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash"]:
+        for g_model in ACTIVE_GEMINI_MODELS:
             try:
                 response = client.models.generate_content(
                     model=g_model,

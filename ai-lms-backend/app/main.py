@@ -60,9 +60,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Temporary memory storage for the hackathon
+# Persistent memory & cache storage
 document_store: Dict[str, str] = {}
 course_store: Dict[str, Course] = {}
+
+TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp_uploads")
+os.makedirs(TEMP_DIR, exist_ok=True)
+CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".cache_docs")
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+def save_document_text(task_id: str, text: str):
+    document_store[task_id] = text
+    try:
+        path = os.path.join(CACHE_DIR, f"{task_id}.txt")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+    except Exception as e:
+        safe_print(f"Notice: Cache save failed: {e}")
+
+def get_document_text(task_id: str) -> Optional[str]:
+    if task_id in document_store:
+        return document_store[task_id]
+    path = os.path.join(CACHE_DIR, f"{task_id}.txt")
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                text = f.read()
+            document_store[task_id] = text
+            return text
+        except Exception:
+            return None
+    return None
 
 @app.get("/")
 @app.get("/api/health")
@@ -82,42 +110,52 @@ async def upload_document(file: UploadFile = File(...)):
             detail="The uploaded PDF is empty (0 bytes). Please upload a valid PDF document with text."
         )
     
-    file_path = f"temp_{os.path.basename(file.filename)}"
-    with open(file_path, "wb") as buffer:
-        buffer.write(file_bytes)
+    safe_filename = f"{uuid.uuid4().hex[:8]}_{os.path.basename(file.filename)}"
+    file_path = os.path.join(TEMP_DIR, safe_filename)
     
-    # Verify PDF is readable and extract text
     try:
-        doc = pymupdf.open(file_path)
-        extracted_pages = []
-        for page in doc:
-            t = page.get_text().strip()
-            if t:
-                extracted_pages.append(t)
-        extracted_text = "\n\n".join(extracted_pages).strip()
-    except pymupdf.EmptyFileError:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot parse empty PDF. Please upload a PDF file containing course content."
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to parse PDF document: {str(e)}")
+        with open(file_path, "wb") as buffer:
+            buffer.write(file_bytes)
+        
+        # Verify PDF is readable and extract text
+        try:
+            doc = pymupdf.open(file_path)
+            extracted_pages = []
+            for page in doc:
+                t = page.get_text().strip()
+                if t:
+                    extracted_pages.append(t)
+            extracted_text = "\n\n".join(extracted_pages).strip()
+        except pymupdf.EmptyFileError:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot parse empty PDF. Please upload a PDF file containing course content."
+            )
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse PDF document: {str(e)}")
 
-    if not extracted_text:
-        # If it's a scanned document with minimal text, fallback to filename or placeholder
-        extracted_text = f"Curriculum extracted from {file.filename}. Key topics and domain foundations."
+        if not extracted_text:
+            # If it's a scanned document with minimal text, fallback to filename or placeholder
+            extracted_text = f"Curriculum extracted from {file.filename}. Key topics and domain foundations."
 
-    # Process chunks into ChromaDB using RAG engine
-    try:
-        process_pdf(file_path)
-    except Exception as e:
-        safe_print(f"Warning: ChromaDB RAG processing encountered: {e}")
+        # Process chunks into ChromaDB using RAG engine
+        try:
+            process_pdf(file_path)
+        except Exception as e:
+            safe_print(f"Warning: ChromaDB RAG processing encountered: {e}")
 
-    task_id = str(uuid.uuid4())
-    # Save the actual extracted text so LLM generates a curriculum from the real content
-    document_store[task_id] = extracted_text
-    
-    return UploadResponse(task_id=task_id, message="Upload and RAG ingestion successful.")
+        task_id = str(uuid.uuid4())
+        # Save the actual extracted text persistently so LLM generates curriculum reliably
+        save_document_text(task_id, extracted_text)
+        
+        return UploadResponse(task_id=task_id, message="Upload and RAG ingestion successful.")
+    finally:
+        # Clean up temporary uploaded file to prevent disk leak
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
 
 @app.post("/api/generate-course/mock", response_model=Course)
 def generate_course_dummy():
@@ -138,7 +176,7 @@ def generate_course_dummy():
 
 @app.post("/api/generate-course", response_model=Course)
 async def generate_course(payload: GenerateCourseRequest):
-    text = document_store.get(payload.task_id)
+    text = get_document_text(payload.task_id)
     if not text:
         raise HTTPException(status_code=404, detail="Task ID not found. Upload a PDF first.")
     
@@ -287,4 +325,4 @@ async def regenerate_quiz(payload: RegenerateQuizRequest):
         return questions
     except Exception as e:
         safe_print(f"Quiz regeneration error: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate quiz: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate quiz: {str(e)}")
