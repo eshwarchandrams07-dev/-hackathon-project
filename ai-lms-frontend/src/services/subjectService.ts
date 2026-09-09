@@ -395,19 +395,36 @@ export const SMART_ASSESSMENTS: SmartAssessment[] = [
 
 class SubjectService {
   getSubjectLessonStats(subject: Subject): SubjectLessonStats {
+    // Collect all unique lesson IDs across ALL materials in this subject uniquely per material
     const allLessonIds: string[] = [];
-    subject.materials?.forEach(mat => {
-      mat.course?.modules?.forEach(mod => {
-        mod.lessons?.forEach(les => {
-          if (les.lesson_id && !allLessonIds.includes(les.lesson_id)) {
-            allLessonIds.push(les.lesson_id);
+    subject.materials?.forEach((mat, mIdx) => {
+      const matKey = mat.id || `mat_${mIdx}`;
+      mat.course?.modules?.forEach((mod, modIdx) => {
+        mod.lessons?.forEach((les, lesIdx) => {
+          const rawId = les.lesson_id || `l_${modIdx + 1}_${lesIdx + 1}`;
+          // Material-scoped unique lesson ID
+          const uniqueLessonId = rawId.startsWith(matKey) ? rawId : `${matKey}_${rawId}`;
+          if (!allLessonIds.includes(uniqueLessonId)) {
+            allLessonIds.push(uniqueLessonId);
           }
         });
       });
     });
 
     const openedLessonIds = subject.openedLessonIds || [];
-    const validOpened = openedLessonIds.filter(id => allLessonIds.includes(id));
+    // A lesson is counted as opened if its uniqueLessonId was recorded,
+    // OR if the raw ID without prefix was recorded for the oldest/original material
+    const oldestMatId = subject.materials?.[subject.materials.length - 1]?.id;
+    const validOpened = allLessonIds.filter(uniqueId => {
+      if (openedLessonIds.includes(uniqueId)) return true;
+      // Legacy compatibility: check if raw ID was opened for the oldest material
+      if (oldestMatId && uniqueId.startsWith(oldestMatId)) {
+        const rawSuffix = uniqueId.substring(oldestMatId.length + 1);
+        if (openedLessonIds.includes(rawSuffix)) return true;
+      }
+      return false;
+    });
+
     const totalLessons = allLessonIds.length;
     const openedLessonsCount = validOpened.length;
     
@@ -456,6 +473,26 @@ class SubjectService {
                 changed = true;
               }
             }
+
+            // Ensure lessons across multiple materials have material-scoped IDs
+            if (sub.materials && sub.materials.length > 1) {
+              sub.materials.forEach((mat, mIdx) => {
+                const matPrefix = mat.id || `mat_${mIdx}`;
+                mat.course?.modules?.forEach(mod => {
+                  mod.lessons?.forEach(les => {
+                    if (les.lesson_id && !les.lesson_id.startsWith(matPrefix)) {
+                      const oldId = les.lesson_id;
+                      les.lesson_id = `${matPrefix}_${oldId}`;
+                      if (sub.openedLessonIds && mIdx === sub.materials.length - 1 && sub.openedLessonIds.includes(oldId)) {
+                        sub.openedLessonIds.push(les.lesson_id);
+                      }
+                      changed = true;
+                    }
+                  });
+                });
+              });
+            }
+
             const stats = this.getSubjectLessonStats(sub);
             if (sub.progressPercent !== stats.progressPercent) {
               sub.progressPercent = stats.progressPercent;
@@ -540,11 +577,14 @@ class SubjectService {
     if (!sub) return null;
 
     const allLessonIds: string[] = [];
-    sub.materials?.forEach(mat => {
-      mat.course?.modules?.forEach(mod => {
-        mod.lessons?.forEach(les => {
-          if (les.lesson_id && !allLessonIds.includes(les.lesson_id)) {
-            allLessonIds.push(les.lesson_id);
+    sub.materials?.forEach((mat, mIdx) => {
+      const matKey = mat.id || `mat_${mIdx}`;
+      mat.course?.modules?.forEach((mod, modIdx) => {
+        mod.lessons?.forEach((les, lesIdx) => {
+          const rawId = les.lesson_id || `l_${modIdx + 1}_${lesIdx + 1}`;
+          const uniqueId = rawId.startsWith(matKey) ? rawId : `${matKey}_${rawId}`;
+          if (!allLessonIds.includes(uniqueId)) {
+            allLessonIds.push(uniqueId);
           }
         });
       });
@@ -597,8 +637,22 @@ class SubjectService {
   addMaterialToSubject(subjectId: string, material: Omit<SubjectMaterial, 'id' | 'subjectId' | 'uploadedAt'>): SubjectMaterial {
     const subjects = this.getSubjects();
     const subIndex = subjects.findIndex(s => s.id === subjectId);
+    const newMatId = `mat_${Date.now()}`;
+
+    // Ensure all lessons in this new material have unique lesson IDs scoped to this material
+    if (material.course?.modules) {
+      material.course.modules.forEach((mod, mIdx) => {
+        mod.lessons?.forEach((les, lIdx) => {
+          const rawId = les.lesson_id || `les_${mIdx + 1}_${lIdx + 1}`;
+          if (!rawId.startsWith(newMatId)) {
+            les.lesson_id = `${newMatId}_${rawId}`;
+          }
+        });
+      });
+    }
+
     const newMaterial: SubjectMaterial = {
-      id: `mat_${Date.now()}`,
+      id: newMatId,
       subjectId,
       fileName: material.fileName,
       fileSize: material.fileSize,
@@ -608,7 +662,16 @@ class SubjectService {
     };
 
     if (subIndex !== -1) {
+      const oldMatCount = subjects[subIndex].materials.length;
       subjects[subIndex].materials.unshift(newMaterial);
+      const newMatCount = subjects[subIndex].materials.length;
+
+      // When a new PDF is added, new unattempted assessment content is introduced.
+      // Pro-rate previous assessmentScore by the proportion of materials
+      if (oldMatCount > 0 && typeof subjects[subIndex].assessmentScore === 'number' && subjects[subIndex].assessmentScore > 0) {
+        subjects[subIndex].assessmentScore = Math.round((subjects[subIndex].assessmentScore * oldMatCount) / newMatCount);
+      }
+
       const stats = this.getSubjectLessonStats(subjects[subIndex]);
       subjects[subIndex].progressPercent = stats.progressPercent;
       this.saveSubjects(subjects);

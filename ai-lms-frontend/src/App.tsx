@@ -118,9 +118,9 @@ export const App: React.FC = () => {
     if (updatedSub) {
       const refreshedList = subjectService.getSubjects();
       setSubjects([...refreshedList]);
-      if (activeSubject && (activeSubject.id === subjectId || activeSubject.name.toLowerCase() === subjectId.toLowerCase())) {
-        const found = refreshedList.find(s => s.id === subjectId || s.name.toLowerCase() === subjectId.toLowerCase());
-        if (found) setActiveSubject(found);
+      const found = refreshedList.find(s => s.id === subjectId || s.name.toLowerCase() === subjectId.toLowerCase());
+      if (found) {
+        setActiveSubject(found);
       }
     }
   };
@@ -188,19 +188,27 @@ export const App: React.FC = () => {
         fileSize: 95000,
         course: course
       });
-      setSubjects([...subjectService.getSubjects()]);
-      setActiveSubject(targetSub);
+      const refreshedList = subjectService.getSubjects();
+      setSubjects([...refreshedList]);
+      const freshSub = refreshedList.find(s => s.id === targetSub!.id) || targetSub;
+      setActiveSubject(freshSub);
       setActiveMaterial(newMat);
 
-      const firstLId = course.modules?.[0]?.lessons?.[0]?.lesson_id || '';
+      const actualCourse = newMat.course || course;
+      setActiveCourse(actualCourse);
+      const firstModId = actualCourse.modules?.[0]?.module_id || '';
+      const firstLId = actualCourse.modules?.[0]?.lessons?.[0]?.lesson_id || '';
+      setActiveModuleId(firstModId);
+      setActiveLessonId(firstLId);
       if (firstLId) {
         handleLessonOpened(targetSub.id, firstLId);
       }
+    } else {
+      setActiveCourse(course);
+      setActiveModuleId(course.modules?.[0]?.module_id || '');
+      setActiveLessonId(course.modules?.[0]?.lessons?.[0]?.lesson_id || '');
     }
 
-    setActiveCourse(course);
-    setActiveModuleId(course.modules?.[0]?.module_id || '');
-    setActiveLessonId(course.modules?.[0]?.lessons?.[0]?.lesson_id || '');
     setIsUploadModalOpen(false);
     setTargetSubjectForUpload(null);
     setCurrentTab('study');

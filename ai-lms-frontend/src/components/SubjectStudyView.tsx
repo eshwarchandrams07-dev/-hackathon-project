@@ -247,38 +247,40 @@ export const SubjectStudyView: React.FC<SubjectStudyViewProps> = ({
           {(() => {
             const stats = subjectService.getSubjectLessonStats(subject);
             return (
-              <div 
-                className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#F0F4F8] border border-[#D9E2EC]"
-                title={`Blended Progress: Slides (70% weight) = ${stats.openedLessonsCount}/${stats.totalLessons} (${stats.slideProgressPercent}%) + Smart Assessment (30% weight) = ${stats.assessmentScore}%`}
-              >
-                <div className="w-16 h-1.5 rounded-full bg-[#D9E2EC] overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-300 ${stats.progressPercent === 100 ? 'bg-emerald-500' : 'bg-[#00A3BF]'}`}
-                    style={{ width: `${stats.progressPercent}%` }}
-                  />
+              <>
+                <div 
+                  className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#F0F4F8] border border-[#D9E2EC]"
+                  title={`Blended Progress: Slides (70% weight) = ${stats.openedLessonsCount}/${stats.totalLessons} (${stats.slideProgressPercent}%) + Smart Assessment (30% weight) = ${stats.assessmentScore}%`}
+                >
+                  <div className="w-16 h-1.5 rounded-full bg-[#D9E2EC] overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-300 ${stats.progressPercent === 100 ? 'bg-emerald-500' : 'bg-[#00A3BF]'}`}
+                      style={{ width: `${stats.progressPercent}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-[#102A43]">{stats.progressPercent}%</span>
+                  <span className="text-[10px] font-mono text-[#627D98]">
+                    ({stats.openedLessonsCount}/{stats.totalLessons} slides • quiz: {stats.assessmentScore}%)
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-[#102A43]">{stats.progressPercent}%</span>
-                <span className="text-[10px] font-mono text-[#627D98]">
-                  ({stats.openedLessonsCount}/{stats.totalLessons} slides • quiz: {stats.assessmentScore}%)
-                </span>
-              </div>
+
+                {onUpdateProgress && (
+                  <button
+                    onClick={() => onUpdateProgress(subject.id, stats.progressPercent === 100 ? 0 : 100)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                      stats.progressPercent === 100 
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700 shadow-xs' 
+                        : 'bg-[#00A3BF] hover:bg-[#008CA4] text-white border-[#00A3BF]'
+                    }`}
+                    title="Toggle 100% completion for this subject"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>{stats.progressPercent === 100 ? '100% Done' : 'Mark 100%'}</span>
+                  </button>
+                )}
+              </>
             );
           })()}
-
-          {onUpdateProgress && (
-            <button
-              onClick={() => onUpdateProgress(subject.id, (subject.progressPercent || 0) === 100 ? 0 : 100)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
-                (subject.progressPercent || 0) === 100 
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700 shadow-xs' 
-                  : 'bg-[#00A3BF] hover:bg-[#008CA4] text-white border-[#00A3BF]'
-              }`}
-              title="Toggle 100% completion for this subject"
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>{(subject.progressPercent || 0) === 100 ? '100% Done' : 'Mark 100%'}</span>
-            </button>
-          )}
 
           <button
             onClick={() => setIsQuizOpen(prev => !prev)}
