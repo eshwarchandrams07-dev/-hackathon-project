@@ -64,6 +64,7 @@ app.add_middleware(
 document_store: Dict[str, str] = {}
 course_store: Dict[str, Course] = {}
 
+@app.get("/")
 @app.get("/api/health")
 @app.get("/health")
 def health_check():
